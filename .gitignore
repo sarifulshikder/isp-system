@@ -1,0 +1,17 @@
+# Environment files
+.env
+.env.local
+
+# Database backups and sensitive files
+cookies.txt
+*.swa
+*.swp
+*.bak
+
+# Logs
+app_logs/
+*.log
+
+# Dependencies
+node_modules/
+vendor/
