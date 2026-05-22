@@ -15,74 +15,64 @@ include 'includes/topbar.php';
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
 
 <style>
-    #map-wrapper { position: relative; height: calc(100vh - 80px); width: 100%; }
-    #map { height: 100%; width: 100%; }
+    #map-wrapper { position: relative; height: calc(100vh - 70px); width: 100%; }
+    #map { height: 100%; width: 100%; z-index: 1; }
     
-    .map-toolbar { position: absolute; top: 20px; left: 20px; z-index: 1000; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); width: 220px; }
-    .tool-btn { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; cursor: pointer; transition: all 0.2s; font-size: 13px; font-weight: 600; text-align: left; color: #333; }
-    .tool-btn:hover { background: #eff6ff; border-color: #3b82f6; }
-    .tool-btn.active { background: #3b82f6 !important; color: #fff !important; border-color: #2563eb; }
+    .map-toolbar { position: absolute; top: 20px; left: 20px; z-index: 1000; background: var(--bg-card); padding: 1.25rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); width: 260px; border: 1px solid var(--border); }
+    .tool-btn { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.625rem; margin-bottom: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-main); cursor: pointer; transition: var(--transition); font-size: 0.875rem; font-weight: 600; color: var(--text-main); }
+    .tool-btn:hover { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+    .tool-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
     
-    .ftth-modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); }
-    .ftth-modal-content { background: #fff; margin: 2% auto; padding: 25px; border-radius: 15px; width: 95%; max-width: 900px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; position: sticky; top: -25px; background: #fff; z-index: 10; padding: 10px 0; border-bottom: 1px solid #eee; }
-    
-    .modal-body label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 12px; color: #475569; }
-    .modal-body select, .modal-body input, .modal-body textarea { width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px; font-size: 12px; }
-    
-    .splicing-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-    .splicing-table th { background:#f8fafc; padding:8px; border:1px solid #e2e8f0; text-align:left; }
-    .splicing-table td { padding: 5px; border: 1px solid #e2e8f0; vertical-align: middle; }
-    
-    /* Dynamic Color Dropdown Styling */
-    .color-select { font-weight: bold; border: 2px solid transparent !important; transition: all 0.2s; }
-    .color-select option { background: white; color: black; }
-
-    .popup-actions { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
-    .btn-action-sm { padding: 6px; border-radius: 6px; border: 1px solid #e2e8f0; cursor: pointer; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; width: 100%; text-decoration: none; }
-    .btn-view { background: #eff6ff; color: #3b82f6; }
-    .btn-del { background: #fef2f2; color: #ef4444; }
+    /* Reusing standardized modal system */
+    .ftth-modal-content { background: var(--bg-card); color: var(--text-main); }
+    .modal-header { border-bottom: 1px solid var(--border); }
+    .splicing-table th { background: var(--bg-soft); color: var(--text-muted); }
+    .splicing-table td { border: 1px solid var(--border); }
+    .color-select { border: 2px solid var(--border) !important; padding: 4px !important; }
 </style>
 
 <div id="map-wrapper">
     <div id="map"></div>
     <div class="map-toolbar">
-        <h4 style="margin:0 0 15px 0; font-size: 14px; color:#1e293b;">Infrastructure Editor</h4>
-        <button class="tool-btn" data-type="OLT" onclick="setMode('add_node', this)"><i class="fa fa-server" style="color:#ef4444;"></i> OLT Node</button>
-        <button class="tool-btn" data-type="POLE" onclick="setMode('add_node', this)"><i class="fa fa-broadcast-tower" style="color:#64748b;"></i> Pole</button>
-        <button class="tool-btn" data-type="MASTER_BOX" onclick="setMode('add_node', this)"><i class="fa fa-box" style="color:#f59e0b;"></i> Master Box</button>
-        <button class="tool-btn" data-type="DB_BOX" onclick="setMode('add_node', this)"><i class="fa fa-boxes" style="color:#3b82f6;"></i> DB Box</button>
-        <button class="tool-btn" data-type="ENCLOSURE" onclick="setMode('add_node', this)"><i class="fa fa-shield-halved" style="color:#8b5cf6;"></i> Enclosure</button>
-        <button class="tool-btn" data-type="JOINT" onclick="setMode('add_node', this)"><i class="fa fa-link" style="color:#10b981;"></i> Joint / Tiffin</button>
-        <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
-        <button class="tool-btn" onclick="openFaultTool()"><i class="fa fa-magnifying-glass-location" style="color:#ef4444;"></i> Fault Localizer</button>
+        <h4 style="margin:0 0 1rem 0; font-size: 1rem; color:var(--text-main);">Infrastructure Editor</h4>
+        <button class="tool-btn" data-type="OLT" onclick="setMode('add_node', this)"><i class="fa fa-server"></i> OLT Node</button>
+        <button class="tool-btn" data-type="POLE" onclick="setMode('add_node', this)"><i class="fa fa-broadcast-tower"></i> Pole</button>
+        <button class="tool-btn" data-type="MASTER_BOX" onclick="setMode('add_node', this)"><i class="fa fa-box"></i> Master Box</button>
+        <button class="tool-btn" data-type="DB_BOX" onclick="setMode('add_node', this)"><i class="fa fa-boxes"></i> DB Box</button>
+        <button class="tool-btn" data-type="ENCLOSURE" onclick="setMode('add_node', this)"><i class="fa fa-shield-halved"></i> Enclosure</button>
+        <button class="tool-btn" data-type="JOINT" onclick="setMode('add_node', this)"><i class="fa fa-link"></i> Joint / Tiffin</button>
+        <hr style="border:0; border-top:1px solid var(--border); margin:0.75rem 0;">
+        <button class="tool-btn" onclick="openFaultTool()"><i class="fa fa-magnifying-glass-location"></i> Fault Localizer</button>
         <button class="tool-btn" id="fiberBtn" onclick="toggleFiberDrawing()"><i class="fa fa-pen-nib"></i> Trace Fiber</button>
-        <button class="tool-btn" onclick="openLeaseManager()"><i class="fa fa-handshake" style="color:#8b5cf6;"></i> Wire Leases</button>
-        <a href="map_export.php" class="tool-btn" style="text-decoration:none;"><i class="fa fa-file-export" style="color:#10b981;"></i> Export KML</a>
-        <button class="tool-btn" onclick="refreshData()" style="background:#fff;"><i class="fa fa-sync"></i> Refresh Data</button>
+        <button class="tool-btn" onclick="openLeaseManager()"><i class="fa fa-handshake"></i> Wire Leases</button>
+        <a href="map_export.php" class="tool-btn" style="text-decoration:none;"><i class="fa fa-file-export"></i> Export KML</a>
+        <button class="tool-btn" onclick="refreshData()"><i class="fa fa-sync"></i> Refresh Data</button>
     </div>
 </div>
 
-<div id="nodeModal" class="ftth-modal">
-    <div class="ftth-modal-content">
-        <div class="modal-header"><h3 id="modalTitle">Asset Manager</h3><span onclick="closeModal('nodeModal')" style="font-size:24px; cursor:pointer;">&times;</span></div>
-        <div class="modal-body">
+<div id="nodeModal" class="ftth-modal modal-overlay">
+    <div class="ftth-modal-content card" style="max-width: 900px; padding: 0;">
+        <div class="card-header flex-between">
+            <h3 class="card-title" id="modalTitle">Asset Manager</h3>
+            <button class="modal-close" onclick="closeModal('nodeModal')">&times;</button>
+        </div>
+        <div class="card-body">
             <input type="hidden" id="nodeId"><input type="hidden" id="nodeLat"><input type="hidden" id="nodeLng"><input type="hidden" id="nodeType">
             
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap:15px;">
-                <div><label>Asset Name / ID</label><input type="text" id="nodeName"></div>
-                <div><label>Capacity</label><select id="nodeCapacity" onchange="handleCapacityChange()"></select></div>
+            <div class="grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:1rem;">
+                <div class="form-group"><label class="form-label">Asset Name / ID</label><input type="text" id="nodeName" class="form-control"></div>
+                <div class="form-group"><label class="form-label">Capacity</label><select id="nodeCapacity" class="form-control" onchange="handleCapacityChange()"></select></div>
             </div>
 
-            <div style="margin-top:10px; background:#f8fafc; padding:15px; border-radius:10px; border:1px solid #e2e8f0;">
-                <label id="connectionLabel" style="font-size:13px; margin-bottom:10px; color:#1e293b;">Port & Fiber Mapping</label>
-                <div id="splicingMatrix" style="overflow-x:auto;">
+            <div style="margin-top:10px; background:var(--bg-soft); padding:1rem; border-radius:var(--radius); border:1px solid var(--border);">
+                <label id="connectionLabel" class="form-label">Port & Fiber Mapping</label>
+                <div id="splicingMatrix" class="table-responsive">
                     <table class="splicing-table">
                         <thead>
-                            <tr id="tableHeader">
+                            <tr>
                                 <th>Port / Link Name</th>
                                 <th>Out Color</th>
-                                <th style="text-align:center;">Splice</th>
+                                <th>Splice</th>
                                 <th>In Color</th>
                                 <th>Target / User</th>
                             </tr>
@@ -92,10 +82,11 @@ include 'includes/topbar.php';
                 </div>
             </div>
 
-            <button class="btn btn-primary" onclick="saveNode()" style="width:100%; padding:12px; font-weight:700; margin-top:20px;"><i class="fa fa-save"></i> Save Infrastructure</button>
+            <button class="btn btn-primary w-full mt-4" onclick="saveNode()"><i class="fa fa-save"></i> Save Infrastructure</button>
         </div>
     </div>
 </div>
+
 
 <!-- Fault Localization Modal -->
 <div id="faultModal" class="ftth-modal">
