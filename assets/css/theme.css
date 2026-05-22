@@ -156,8 +156,12 @@ body {
 /* Dark Mode Overrides for Components */
 body.dark .card-title { color: #f1f5f9; }
 body.dark .text-muted { color: #cbd5e1; }
-body.dark .stat-label { color: #94a3b8; }
-body.dark .stat-value { color: #f8fafc; }
+body.dark .fw-600 { color: #e2e8f0; }
+
+/* Dashboard & Stats Components */
+body.dark .card-body .text-muted { color: #94a3b8; }
+body.dark .card-body div[style*="font-size: 1.5rem"] { color: #ffffff; }
+
 body.dark .btn-secondary { background: #1e293b; color: #f1f5f9; border-color: #334155; }
 body.dark .btn-secondary:hover { background: #334155; }
 
