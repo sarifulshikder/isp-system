@@ -396,7 +396,7 @@ $stats = $voucherSys->getStats();
                     SELECT v.*, p.name as plan_name 
                     FROM hotspot_vouchers v
                     JOIN hotspot_profiles p ON v.profile_id = p.id
-                    ORDER BY v.generated_at DESC LIMIT 20
+                    ORDER BY v.created_at DESC LIMIT 20
                 ");
                 ?>
                 <table class="table">
@@ -425,7 +425,7 @@ $stats = $voucherSys->getStats();
                                 <?php endif; ?>
                             </td>
                             <td><?= $v['used_by'] ?: '-' ?></td>
-                            <td><?= date('M d, H:i', strtotime($v['generated_at'])) ?></td>
+                            <td><?= date('M d, H:i', strtotime($v['created_at'])) ?></td>
                             <td><?= date('M d, H:i', strtotime($v['expires_at'])) ?></td>
                         </tr>
                         <?php endwhile; ?>

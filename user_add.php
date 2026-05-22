@@ -101,223 +101,148 @@ include 'includes/sidebar.php';
 include 'includes/topbar.php';
 ?>
 
-<style>
-    .form-container { padding: 25px; max-width: 1000px; margin: 0 auto; }
-    .card { background: #fff; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; overflow: hidden; }
-    .card-header { background: #f8fafc; padding: 20px 25px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }
-    .card-header i { color: #3b82f6; font-size: 20px; }
-    .card-header h2 { margin: 0; font-size: 18px; color: #1e293b; font-weight: 600; }
-    
-    .card-body { padding: 30px; }
-    .form-section { margin-bottom: 30px; }
-    .section-title { font-size: 14px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
-    
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 20px; }
-    .form-group { margin-bottom: 15px; }
-    .form-group.full-width { grid-column: span 2; }
-    
-    .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #475569; font-size: 13px; }
-    .input-wrapper { position: relative; }
-    .input-wrapper i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 14px; }
-    
-    .form-control { width: 100%; padding: 10px 12px 10px 38px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: all 0.2s; color: #1e293b; }
-    .form-control:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-    textarea.form-control { min-height: 80px; padding-top: 10px; }
-    
-    .btn-submit { background: #3b82f6; color: white; border: none; padding: 12px 30px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 10px; width: 100%; justify-content: center; margin-top: 20px; }
-    .btn-submit:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(37, 99, 235, 0.2); }
-    
-    .alert { padding: 15px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 500; }
-    .alert.error { background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; }
-    
-    @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } .form-group.full-width { grid-column: span 1; } }
-</style>
-
-<div class="form-container">
+<div class="animate-fade-in" style="max-width: 1000px; margin: 0 auto;">
     <?php if($msg): ?>
-        <div class="alert <?= $msg_type ?>"><?= htmlspecialchars($msg) ?></div>
+        <div class="badge badge-<?= $msg_type == 'error' ? 'danger' : 'success' ?> mb-4" style="width: 100%; justify-content: center; padding: 1rem; border-radius: var(--radius);">
+            <?= htmlspecialchars($msg) ?>
+        </div>
     <?php endif; ?>
 
-    <div class="card">
-        <div class="card-header">
-            <i class="fa fa-user-plus"></i>
-            <h2>Register New Customer</h2>
+    <form method="POST">
+        <!-- Personal Information -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fa fa-user text-primary"></i> Personal Information</h2>
+            </div>
+            <div class="card-body">
+                <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" name="full_name" class="form-control" placeholder="E.g. Ram Bahadur" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" name="phone" class="form-control" placeholder="98XXXXXXXX" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" name="email" class="form-control" placeholder="example@mail.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Installation Address</label>
+                        <input type="text" name="address" class="form-control" placeholder="City, Ward No, Street">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">Geo Location</label>
+                        <div class="flex gap-2">
+                            <input type="text" name="lat" id="lat" class="form-control" placeholder="Latitude">
+                            <input type="text" name="lng" id="lng" class="form-control" placeholder="Longitude">
+                            <button type="button" onclick="getLocation()" class="btn btn-secondary">
+                                <i class="fa fa-crosshairs"></i> <span class="d-none d-sm-inline">Detect</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <div class="card-body">
-            <form method="POST">
-                <!-- Personal Information -->
-                <div class="form-section">
-                    <div class="section-title"><i class="fa fa-info-circle"></i> Personal Information</div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Full Name</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-user"></i>
-                                <input type="text" name="full_name" class="form-control" placeholder="E.g. Ram Bahadur" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Phone Number</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-phone"></i>
-                                <input type="text" name="phone" class="form-control" placeholder="98XXXXXXXX" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Email Address</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-envelope"></i>
-                                <input type="email" name="email" class="form-control" placeholder="example@mail.com">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Installation Address</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-map-marker-alt"></i>
-                                <input type="text" name="address" class="form-control" placeholder="City, Ward No, Street">
-                            </div>
-                        </div>
-                        <div class="form-group full-width">
-                            <label>Geo Location (For Map)</label>
-                            <div style="display: flex; gap: 10px;">
-                                <div class="input-wrapper" style="flex: 1;">
-                                    <i class="fa fa-map-pin"></i>
-                                    <input type="text" name="lat" id="lat" class="form-control" placeholder="Latitude (e.g. 27.7172)">
-                                </div>
-                                <div class="input-wrapper" style="flex: 1;">
-                                    <i class="fa fa-map-pin"></i>
-                                    <input type="text" name="lng" id="lng" class="form-control" placeholder="Longitude (e.g. 85.3240)">
-                                </div>
-                                <button type="button" onclick="getLocation()" class="btn-submit" style="width: auto; margin-top: 0; padding: 10px 15px;">
-                                    <i class="fa fa-crosshairs"></i> Get Location
-                                </button>
-                            </div>
-                        </div>
+
+        <!-- Network Details -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fa fa-network-wired text-primary"></i> Network & FTTH Details</h2>
+            </div>
+            <div class="card-body">
+                <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">OLT Name</label>
+                        <input type="text" name="olt" class="form-control" placeholder="OLT Identifier">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">OLT Port</label>
+                        <input type="number" name="olt_port" class="form-control" placeholder="Port #">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Master Box</label>
+                        <input type="text" name="master_box" class="form-control" placeholder="Splitter Name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">DB Box</label>
+                        <input type="text" name="db_box" class="form-control" placeholder="DB Identifier">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">DB Port</label>
+                        <input type="number" name="db_port" class="form-control" placeholder="Port #">
                     </div>
                 </div>
-
-                <!-- FTTH & Network Inventory -->
-                <div class="form-section">
-                    <div class="section-title"><i class="fa fa-network-wired"></i> FTTH & Network Inventory</div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Select OLT</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-server"></i>
-                                <input type="text" name="olt" class="form-control" placeholder="OLT Name or ID">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>OLT Port</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-plug"></i>
-                                <input type="number" name="olt_port" class="form-control" placeholder="Port Number">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Master Splitter / Box</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-box"></i>
-                                <input type="text" name="master_box" class="form-control" placeholder="Master Box Name/ID">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Distribution Box (DB)</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-boxes"></i>
-                                <input type="text" name="db_box" class="form-control" placeholder="DB Name or ID">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>DB Port</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-sign-in-alt"></i>
-                                <input type="number" name="db_port" class="form-control" placeholder="DB Port Number">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Account & Authentication -->
-                <div class="form-section">
-                    <div class="section-title"><i class="fa fa-key"></i> PPP Credentials</div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>PPP Username</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-id-card"></i>
-                                <input type="text" name="username" class="form-control" placeholder="Unique username" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>PPP Password</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-lock"></i>
-                                <input type="password" name="password" class="form-control" placeholder="Secret password" required>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Service Details -->
-                <div class="form-section">
-                    <div class="section-title"><i class="fa fa-wifi"></i> Service Configuration</div>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Internet Plan</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-list-ul" style="z-index: 5;"></i>
-                                <select name="plan_id" class="form-control" required style="padding-left: 38px;">
-                                    <option value="">Select a plan</option>
-                                    <?php while($p = $plans->fetch_assoc()): ?>
-                                        <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['name']) ?> (<?= $p['speed'] ?>)</option>
-                                    <?php endwhile; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Expiry Date</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-calendar-alt"></i>
-                                <input type="date" name="expiry" class="form-control" required value="<?= date('Y-m-d', strtotime('+30 days')) ?>">
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>Assign Branch</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-sitemap" style="z-index: 5;"></i>
-                                <select name="branch_id" class="form-control" style="padding-left: 38px;">
-                                    <option value="">Main Branch</option>
-                                    <?php while($b = $branches->fetch_assoc()): ?>
-                                        <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['name']) ?></option>
-                                    <?php endwhile; ?>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label>VLAN ID</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-network-wired"></i>
-                                <input type="number" name="vlan" class="form-control" value="0">
-                            </div>
-                        </div>
-                        <div class="form-group full-width">
-                            <label>ONU Serial Number (TR-069)</label>
-                            <div class="input-wrapper">
-                                <i class="fa fa-microchip"></i>
-                                <input type="text" name="onu_serial" class="form-control" placeholder="Enter ONU Serial for Auto-Configuration">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" name="add" class="btn-submit">
-                    <i class="fa fa-save"></i> Register Customer & Activate
-                </button>
-            </form>
+            </div>
         </div>
-    </div>
+
+        <!-- Account Credentials -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fa fa-key text-primary"></i> Account Credentials</h2>
+            </div>
+            <div class="card-body">
+                <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">PPP Username</label>
+                        <input type="text" name="username" class="form-control" placeholder="Unique username" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">PPP Password</label>
+                        <input type="password" name="password" class="form-control" placeholder="Secure password" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Plan -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fa fa-wifi text-primary"></i> Service Configuration</h2>
+            </div>
+            <div class="card-body">
+                <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                    <div class="form-group">
+                        <label class="form-label">Internet Plan</label>
+                        <select name="plan_id" class="form-control" required>
+                            <option value="">Select a plan</option>
+                            <?php while($p = $plans->fetch_assoc()): ?>
+                                <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['name']) ?> (<?= $p['speed'] ?>)</option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Expiry Date</label>
+                        <input type="date" name="expiry" class="form-control" required value="<?= date('Y-m-d', strtotime('+30 days')) ?>">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Assign Branch</label>
+                        <select name="branch_id" class="form-control">
+                            <option value="">Main Branch</option>
+                            <?php while($b = $branches->fetch_assoc()): ?>
+                                <option value="<?= $b['id'] ?>"><?= htmlspecialchars($b['name']) ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">VLAN ID</label>
+                        <input type="number" name="vlan" class="form-control" value="0">
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label class="form-label">ONU Serial (TR-069)</label>
+                        <input type="text" name="onu_serial" class="form-control" placeholder="Auto-configuration serial number">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 mb-4">
+            <button type="submit" name="add" class="btn btn-primary w-full" style="padding: 1rem;">
+                <i class="fa fa-save"></i> Register Customer & Activate
+            </button>
+        </div>
+    </form>
 </div>
 
 <?php include 'includes/footer.php'; ?>

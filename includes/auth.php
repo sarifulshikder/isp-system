@@ -78,16 +78,16 @@ function isStaff(){
 
 /* Log activity function */
 function logActivity($action, $description = '') {
-    global $conn, $USER_ID, $USERNAME;
+    global $conn, $USER_ID;
     
     if (!isset($conn) || !isset($USER_ID)) return;
     
     $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     
     $stmt = $conn->prepare("
-        INSERT INTO activity_log (user_id, username, action, description, ip_address)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO activity_log (admin_id, action, description, ip)
+        VALUES (?, ?, ?, ?)
     ");
-    $stmt->bind_param("issss", $USER_ID, $USERNAME, $action, $description, $ip);
+    $stmt->bind_param("isss", $USER_ID, $action, $description, $ip);
     $stmt->execute();
 }

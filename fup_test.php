@@ -11,12 +11,12 @@ while($p = $plans_res->fetch_assoc()) {
         'name' => $p['name'],
         'base_speed' => $p['speed'],
         'data_limit' => (float)$p['data_limit'] / 1073741824, // to GB
-        'fup1_limit' => (float)$p['fup1_limit'] / 1073741824,
-        'fup1_speed' => $p['fup1_speed'],
-        'fup2_limit' => (float)$p['fup2_limit'] / 1073741824,
-        'fup2_speed' => $p['fup2_speed'],
-        'fup3_limit' => (float)$p['fup3_limit'] / 1073741824,
-        'fup3_speed' => $p['fup3_speed'],
+        'fup1_limit' => (float)($p['fup1_limit'] ?? 0) / 1073741824,
+        'fup1_speed' => $p['fup1_speed'] ?? '',
+        'fup2_limit' => (float)($p['fup2_limit'] ?? 0) / 1073741824,
+        'fup2_speed' => $p['fup2_speed'] ?? '',
+        'fup3_limit' => (float)($p['fup3_limit'] ?? 0) / 1073741824,
+        'fup3_speed' => $p['fup3_speed'] ?? '',
     ];
 }
 ?>

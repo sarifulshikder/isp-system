@@ -32,74 +32,75 @@ include $base_path . 'includes/sidebar.php';
 include $base_path . 'includes/topbar.php';
 ?>
 
-<style>
-    .report-container { padding: 20px; }
-    .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; overflow: hidden; }
-    .card-header { padding: 20px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; }
-    .card-header h2 { margin: 0; font-size: 18px; font-weight: 600; color: #1e293b; }
-    .table-responsive { width: 100%; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; text-align: left; }
-    th { background: #f8fafc; padding: 15px 20px; font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
-    td { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #1e293b; }
-    tr:hover { background: #f8fafc; }
-    .badge { padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-    .badge-expired { background: #fee2e2; color: #ef4444; }
-    .btn-action { padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.2s; }
-    .btn-renew { background: #3b82f6; color: #fff; }
-    .btn-view { background: #f1f5f9; color: #64748b; }
-    .btn-export { background: #10b981; color: #fff; border: none; cursor: pointer; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-    .empty-state { padding: 40px; text-align: center; color: #64748b; }
-</style>
-
-<div class="report-container">
-    <div class="card">
-        <div class="card-header">
-            <h2>Expired Customers (<?= $result ? $result->num_rows : 0 ?>)</h2>
-            <form method="post" action="export_expired_users.php">
-                <button type="submit" class="btn-export"><i class="fa fa-file-csv"></i> Export CSV</button>
-            </form>
+<div class="animate-fade-in">
+    
+    <div class="flex-between mb-4 flex-wrap gap-4">
+        <div>
+            <h1 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">Expired Subscriptions</h1>
+            <p class="text-muted" style="font-size: 0.875rem;">Showing customers whose plans have already expired</p>
         </div>
+        <div class="flex gap-2">
+            <form method="post" action="export_expired_users.php">
+                <button type="submit" class="btn btn-secondary">
+                    <i class="fa fa-file-csv mr-1"></i> Export Report
+                </button>
+            </form>
+            <span class="badge badge-danger" style="padding: 0.5rem 1rem;">
+                <i class="fa fa-user-xmark mr-1"></i> <?= $result ? $result->num_rows : 0 ?> Expired
+            </span>
+        </div>
+    </div>
+
+    <div class="card">
         <div class="table-responsive">
             <table>
                 <thead>
                     <tr>
-                        <th>Customer</th>
-                        <th>Plan & Speed</th>
-                        <th>Phone</th>
-                        <th>Expiry Date</th>
+                        <th>Subscriber</th>
+                        <th>Expired Package</th>
+                        <th>Contact</th>
+                        <th>Expiry Timeline</th>
                         <th>Status</th>
-                        <th>Actions</th>
+                        <th style="text-align: right;">Quick Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if ($result && $result->num_rows > 0): ?>
-                        <?php while ($row = $result->fetch_assoc()): ?>
+                        <?php while ($row = $result->fetch_assoc()): 
+                            $days_ago = floor((time() - strtotime($row['expiry'])) / 86400);
+                        ?>
                             <tr>
-                                <td><div style="font-weight: 600;"><?= htmlspecialchars($row['username']) ?></div></td>
                                 <td>
-                                    <div><?= htmlspecialchars($row['plan_name'] ?? 'No Plan') ?></div>
-                                    <div style="font-size: 12px; color: #10b981;"><?= htmlspecialchars($row['speed'] ?? '-') ?></div>
+                                    <div class="fw-600"><?= htmlspecialchars($row['username']) ?></div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">Account Suspended</div>
                                 </td>
-                                <td><?= htmlspecialchars($row['phone'] ?? 'N/A') ?></td>
                                 <td>
-                                    <div style="color: #ef4444; font-weight: 500;"><?= date('M d, Y', strtotime($row['expiry'])) ?></div>
-                                    <div style="font-size: 12px; color: #94a3b8;"><?= floor((time() - strtotime($row['expiry'])) / 86400) ?> days ago</div>
+                                    <div class="fw-600"><?= htmlspecialchars($row['plan_name'] ?? 'N/A') ?></div>
+                                    <div style="font-size: 0.75rem; color: var(--success); font-weight: 700;"><?= htmlspecialchars($row['speed'] ?? '-') ?></div>
                                 </td>
-                                <td><span class="badge badge-expired">Expired</span></td>
                                 <td>
-                                    <div style="display: flex; gap: 8px;">
-                                        <a href="<?= $base_path ?>user_view.php?username=<?= urlencode($row['username']) ?>" class="btn-action btn-view" title="View Details"><i class="fa fa-eye"></i></a>
-                                        <a href="<?= $base_path ?>recharge.php?user=<?= urlencode($row['username']) ?>" class="btn-action btn-renew" title="Recharge Now"><i class="fa fa-bolt"></i> Renew</a>
+                                    <div style="font-size: 0.8125rem;"><i class="fa fa-phone text-muted mr-1"></i> <?= htmlspecialchars($row['phone'] ?? 'N/A') ?></div>
+                                </td>
+                                <td>
+                                    <div class="text-danger fw-600" style="font-size: 0.875rem;"><?= date('M d, Y', strtotime($row['expiry'])) ?></div>
+                                    <div class="text-muted" style="font-size: 0.75rem;"><?= $days_ago ?> days past due</div>
+                                </td>
+                                <td><span class="badge badge-danger">EXPIRED</span></td>
+                                <td style="text-align: right;">
+                                    <div class="flex gap-2 justify-end">
+                                        <a href="<?= $base_path ?>user_view.php?user=<?= urlencode($row['username']) ?>" class="btn btn-secondary btn-sm" title="View Details" style="padding: 0.4rem; width: 32px;"><i class="fa fa-eye"></i></a>
+                                        <a href="<?= $base_path ?>recharge.php?user=<?= urlencode($row['username']) ?>" class="btn btn-primary btn-sm" title="Recharge Now" style="font-size: 10px; padding: 0.25rem 0.6rem;"><i class="fa fa-bolt mr-1"></i> Renew</a>
                                     </div>
                                 </td>
                             </tr>
                         <?php endwhile; ?>
                     <?php else: ?>
-                        <tr><td colspan="6"><div class="empty-state"><p>No expired customers found.</p></div></td></tr>
+                        <tr><td colspan="6" style="text-align: center; padding: 4rem; color: var(--text-muted);">No expired subscriptions found. All customers are currently active.</td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
+
 <?php include $base_path . 'includes/footer.php'; ?>

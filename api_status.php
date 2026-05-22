@@ -36,23 +36,23 @@ $mem_stats = preg_split('/\s+/', $mem_lines[1]);
 $mem_usage = round(($mem_stats[2] / $mem_stats[1]) * 100, 1); // Used / Total
 
 echo json_encode([
-    'database' => [
-        'status' => $db_online,
+    'db' => [
+        'status' => $db_online ? 'Online' : 'Offline',
         'uptime' => round($db_uptime / 3600, 1) . " hours",
         'version' => $db_version
     ],
     'radius' => [
-        'status' => $radius_online,
-        'success_today' => $auth_ok,
-        'failed_today' => $auth_fail
+        'process' => $radius_online ? 'Running' : 'Stopped',
+        'auth_success' => $auth_ok,
+        'auth_fail' => $auth_fail
     ],
     'acs' => [
-        'status' => $acs_online,
-        'pending_tasks' => $pending_tasks
+        'status' => $acs_online ? 'Online' : 'Offline',
+        'tasks' => $pending_tasks
     ],
     'system' => [
-        'cpu_load' => $load[0],
-        'mem_usage' => $mem_usage,
+        'cpu' => $load[0],
+        'mem_percent' => $mem_usage,
         'uptime' => shell_exec("uptime -p")
     ]
 ]);

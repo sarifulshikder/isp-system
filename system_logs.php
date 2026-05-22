@@ -242,12 +242,12 @@ $message = '';
                                 <?php endwhile;
                                 
                             } elseif ($log_type == 'auto_invoice') {
-                                $logs = $conn->query("SELECT * FROM auto_invoice_log ORDER BY generated_at DESC LIMIT 500");
+                                $logs = $conn->query("SELECT * FROM auto_invoice_log ORDER BY created_at DESC LIMIT 500");
                                 while ($l = $logs->fetch_assoc()): ?>
                                     <tr>
-                                        <td><?= date('M d, H:i', strtotime($l['generated_at'])) ?></td>
-                                        <td><?= $l['month_year'] ?></td>
-                                        <td><?= $l['total_invoices'] ?? '-' ?></td>
+                                        <td><?= date('M d, H:i', strtotime($l['created_at'])) ?></td>
+                                        <td>Customer ID: <?= $l['customer_id'] ?></td>
+                                        <td>Invoice ID: <?= $l['invoice_id'] ?: '-' ?></td>
                                     </tr>
                                 <?php endwhile;
                             }

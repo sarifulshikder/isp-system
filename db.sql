@@ -77,7 +77,9 @@ CREATE TABLE IF NOT EXISTS `plans` (
   `fup1_speed`     VARCHAR(50)  DEFAULT NULL,
   `fup1_limit`     INT DEFAULT NULL COMMENT 'GB',
   `fup2_speed`     VARCHAR(50)  DEFAULT NULL,
-  `fup2_limit`     INT DEFAULT NULL,
+  `fup2_limit`     INT DEFAULT NULL COMMENT 'GB',
+  `fup3_speed`     VARCHAR(50)  DEFAULT NULL,
+  `fup3_limit`     INT DEFAULT NULL COMMENT 'GB',
   `status`         ENUM('active','inactive') DEFAULT 'active',
   `created_at`     DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

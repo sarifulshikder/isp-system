@@ -1,20 +1,20 @@
 <!-- Mobile Header -->
 <div class="mobile-header">
-    <div class="flex-center gap-10">
-        <button class="icon-btn text-white" onclick="toggleSidebar()" style="background:transparent; border:none; font-size: 20px;">
+    <div class="flex items-center gap-4">
+        <button class="icon-btn" onclick="toggleSidebar()" style="background:transparent; border:none; color:white; font-size: 20px;">
             <i class="fa fa-bars"></i>
         </button>
-        <span class="fw-bold">ISP SYSTEM</span>
+        <span class="fw-600">ISP SYSTEM</span>
     </div>
     
-    <div class="flex-center gap-10">
-        <a href="<?= $base_path ?>tickets.php" class="text-white" style="position:relative; font-size: 18px;">
+    <div class="flex items-center gap-4">
+        <a href="<?= $base_path ?>tickets.php" style="color:white; position:relative; font-size: 18px;">
             <i class="fa fa-bell"></i>
             <?php if(isset($openTickets) && $openTickets > 0): ?>
-                <span class="badge bg-danger rounded-circle p-1" style="position:absolute; top:-8px; right:-8px; font-size:9px;"><?= $openTickets ?></span>
+                <span class="badge badge-danger" style="position:absolute; top:-8px; right:-8px; padding: 2px 5px; font-size:9px;"><?= $openTickets ?></span>
             <?php endif; ?>
         </a>
-        <div class="user-avatar" onclick="window.location.href='<?= $base_path ?>change_password.php'">
+        <div class="user-avatar profile-trigger" style="width:32px; height:32px; background:var(--primary); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer;">
             <?= strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)) ?>
         </div>
     </div>
@@ -28,7 +28,7 @@
 <div class="sidebar">
     <div class="sidebar-logo">
         <?php if(!empty($logo) && file_exists($base_path.'uploads/'.$logo)): ?>
-            <img src="<?= $base_path ?>uploads/<?= htmlspecialchars($logo) ?>" alt="ISP SYSTEM">
+            <img src="<?= $base_path ?>uploads/<?= htmlspecialchars($logo) ?>" alt="ISP SYSTEM" style="max-height: 40px;">
         <?php else: ?>
             <h2>ISP SYSTEM</h2>
         <?php endif; ?>
@@ -36,7 +36,7 @@
     
     <div class="sidebar-menu">
         <a href="<?= $base_path ?>dashboard.php" class="<?=($active=='dashboard')?'active':''?>">
-            <i class="fa fa-gauge-high"></i>Dashboard
+            <i class="fa fa-gauge-high"></i> <span>Dashboard</span>
         </a>
         
         <a href="javascript:void(0)" class="menu-toggle-item" onclick="toggleMenu('customer-submenu', this)">

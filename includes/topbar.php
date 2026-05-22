@@ -16,32 +16,30 @@ $title = $page_title ?? 'ISP Management';
 ?>
 
 <div class="topbar">
-    <div class="topbar-left">
-        <button id="toggleBtn" class="topbar-icon" style="border:none;">
+    <div class="flex items-center gap-4">
+        <button id="toggleBtn" class="topbar-icon" style="border:none; cursor:pointer;">
             <i class="fa fa-bars"></i>
         </button>
-        <h2 class="topbar-title d-none d-sm-block"><?= htmlspecialchars($title) ?></h2>
+        <h2 class="card-title d-none d-sm-block"><?= htmlspecialchars($title) ?></h2>
     </div>
 
-    <div class="topbar-right">
-
+    <div class="flex items-center gap-4">
         <!-- Global Search -->
-        <div class="d-none d-md-block" style="position: relative; width: 250px;">
-            <div style="display: flex; align-items: center; background: var(--bg-soft); border-radius: 20px; padding: 5px 15px; gap: 8px; border: 1px solid var(--border);">
+        <div class="d-none d-md-block" style="position: relative; width: 280px;">
+            <div class="flex items-center" style="background: var(--bg-soft); border-radius: var(--radius); padding: 0.5rem 1rem; gap: 0.75rem; border: 1px solid var(--border);">
                 <i class="fa fa-search" style="color: var(--text-light); font-size: 14px;"></i>
-                <input type="text" id="globalSearch" placeholder="Search..." 
+                <input type="text" id="globalSearch" placeholder="Search customers..." 
                        style="border: none; background: transparent; outline: none; font-size: 13px; width: 100%; color: var(--text-main);">
             </div>
-            <div id="searchResults" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-lg); max-height: 300px; overflow-y: auto; z-index: 1000; margin-top: 5px;">
-            </div>
+            <div id="searchResults" class="dropdown-menu" style="width: 100%; top: 110%; left: 0;"></div>
         </div>
 
-        <!-- Quick Add Button -->
-        <div class="dropdown">
-            <button class="btn btn-primary btn-sm rounded-pill px-3" id="quickAddBtn" style="height: 36px;">
+        <!-- Quick Add -->
+        <div class="dropdown" style="position:relative;">
+            <button class="btn btn-primary btn-sm" id="quickAddBtn">
                 <i class="fa fa-plus"></i> <span class="d-none d-lg-inline">Quick Add</span>
             </button>
-            <div id="quickAddDropdown" class="dropdown-menu">
+            <div id="quickAddDropdown" class="dropdown-menu" style="right: 0;">
                 <a href="add_user.php" class="dropdown-item"><i class="fa fa-user-plus"></i> Add Customer</a>
                 <a href="tickets.php?action=new" class="dropdown-item"><i class="fa fa-ticket"></i> Create Ticket</a>
                 <a href="leads.php?action=new" class="dropdown-item"><i class="fa fa-user-plus"></i> Add Lead</a>
@@ -49,11 +47,11 @@ $title = $page_title ?? 'ISP Management';
             </div>
         </div>
 
-        <!-- Notification / Tickets -->
-        <a href="<?= $base_path ?? '' ?>tickets.php" class="topbar-icon" style="text-decoration: none;">
+        <!-- Notifications -->
+        <a href="<?= $base_path ?? '' ?>tickets.php" class="topbar-icon" style="text-decoration: none; position: relative;">
             <i class="fa fa-bell"></i>
             <?php if($openTickets > 0): ?>
-                <span class="badge"><?= $openTickets ?></span>
+                <span class="badge badge-danger" style="position:absolute; top:-5px; right:-5px; padding: 2px 6px; font-size: 10px;"><?= $openTickets ?></span>
             <?php endif; ?>
         </a>
 
@@ -63,18 +61,20 @@ $title = $page_title ?? 'ISP Management';
         </button>
 
         <!-- Profile -->
-        <div class="user-menu profile-container" style="position: relative;">
-            <div class="user-avatar">
+        <div class="profile-trigger flex items-center gap-2" style="cursor:pointer; padding: 0.25rem 0.5rem; border-radius: var(--radius); transition: var(--transition);">
+            <div class="user-avatar" style="width:32px; height:32px; background:var(--primary); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">
                 <?= strtoupper(substr($_SESSION['username'] ?? 'A', 0, 1)) ?>
             </div>
-            <span class="d-none d-lg-inline" style="font-weight: 600;">
+            <span class="d-none d-lg-inline fw-600" style="font-size: 0.875rem;">
                 <?= htmlspecialchars($_SESSION['username'] ?? 'Admin') ?>
             </span>
-            <i class="fa fa-chevron-down d-none d-sm-inline" style="font-size: 10px;"></i>
+            <i class="fa fa-chevron-down d-none d-sm-inline" style="font-size: 10px; color: var(--text-muted);"></i>
 
-            <div class="profile-dropdown dropdown-menu" style="display: none; position: absolute; top: 115%; right: 0; width: 180px;">
+            <div class="profile-dropdown dropdown-menu" style="right: 0; top: 110%; width: 180px;">
                 <a href="<?= $base_path ?? '' ?>change_password.php" class="dropdown-item"><i class="fa fa-key"></i> Change Password</a>
-                <a href="<?= $base_path ?? '' ?>logout.php" class="dropdown-item text-danger border-top mt-1"><i class="fa fa-sign-out-alt"></i> Logout</a>
+                <a href="<?= $base_path ?? '' ?>logout.php" class="dropdown-item text-danger" style="border-top: 1px solid var(--border); margin-top: 0.5rem; padding-top: 0.75rem;">
+                    <i class="fa fa-sign-out-alt"></i> Logout
+                </a>
             </div>
         </div>
     </div>
@@ -116,29 +116,47 @@ document.addEventListener('DOMContentLoaded', function() {
     // 3. Theme Toggle Logic
     const themeToggle = document.getElementById('themeToggle');
     if (themeToggle) {
+        const updateIcon = (isDark) => {
+            themeToggle.innerHTML = isDark ? '<i class="fa fa-sun"></i>' : '<i class="fa fa-moon"></i>';
+        };
+
         const currentTheme = localStorage.getItem('theme') || 'light';
         if (currentTheme === 'dark') {
             document.body.classList.add('dark');
-            themeToggle.innerHTML = '<i class="fa fa-sun"></i>';
+            updateIcon(true);
+        } else {
+            updateIcon(false);
         }
 
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark');
             const isDark = document.body.classList.contains('dark');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            themeToggle.innerHTML = isDark ? '<i class="fa fa-sun"></i>' : '<i class="fa fa-moon"></i>';
+            updateIcon(isDark);
         });
     }
 
     // 4. Profile Dropdown
-    const profileContainer = document.querySelector('.profile-container');
     const profileDropdown = document.querySelector('.profile-dropdown');
-    if (profileContainer && profileDropdown) {
-        profileContainer.addEventListener('click', (e) => {
-            e.stopPropagation();
-            profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block';
+    const profileTriggers = document.querySelectorAll('.profile-trigger');
+    
+    if (profileDropdown && profileTriggers.length > 0) {
+        profileTriggers.forEach(trigger => {
+            trigger.addEventListener('click', function(e) {
+                // If clicking a link inside, let it happen
+                if (e.target.closest('.dropdown-item')) return;
+                
+                e.stopPropagation();
+                profileDropdown.classList.toggle('show');
+            });
         });
-        document.addEventListener('click', () => profileDropdown.style.display = 'none');
+
+        // Close when clicking anywhere else
+        document.addEventListener('click', function(e) {
+            if (!profileDropdown.contains(e.target) && !Array.from(profileTriggers).some(t => t.contains(e.target))) {
+                profileDropdown.classList.remove('show');
+            }
+        });
     }
 
     // 5. Quick Add Dropdown
@@ -227,9 +245,16 @@ document.addEventListener('DOMContentLoaded', function() {
         75% { transform: rotate(-10deg); }
     }
     .dropdown-menu.show {
-        display: block;
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(5px);
+        display: flex !important;
+        flex-direction: column;
+        opacity: 1 !important;
+        visibility: visible !important;
+        transform: translateY(5px) !important;
+        z-index: 9999 !important;
+    }
+    .profile-dropdown {
+        min-width: 200px !important;
+        padding: 8px 0 !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
     }
 </style>

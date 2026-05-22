@@ -3,81 +3,84 @@ $base_path = './';
 include 'config.php';
 include 'includes/auth.php';
 
+// Temporary Schema Migration for FUP Tier 3
+$check_fup3 = $conn->query("SHOW COLUMNS FROM plans LIKE 'fup3_speed'");
+if ($check_fup3->num_rows == 0) {
+    $conn->query("ALTER TABLE plans ADD COLUMN fup3_speed VARCHAR(50) DEFAULT NULL AFTER fup2_limit");
+    $conn->query("ALTER TABLE plans ADD COLUMN fup3_limit INT DEFAULT NULL AFTER fup3_speed");
+}
+
 /* Page info */
 $page_title = "Service Packages & Plans";
 $active = "plans";
 
 /* Plan Form Template */
+/* Plan Form Template */
 function renderPlanForm($id_prefix, $isEdit = false) { ?>
     <form method="post">
         <?php if($isEdit) echo '<input type="hidden" name="id" id="edit_id">'; ?>
-        <div class="form-grid">
+        <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem;">
             <div class="form-group">
-                <label>Package / Plan Name</label>
-                <input class="form-control" name="name" id="<?= $id_prefix ?>_name" required>
+                <label class="form-label">Package / Plan Name</label>
+                <input class="form-control" name="name" id="<?= $id_prefix ?>_name" placeholder="e.g. Ultra Fiber 100M" required>
             </div>
             <div class="form-group">
-                <label>Base Speed</label>
+                <label class="form-label">Base Speed</label>
                 <input class="form-control" name="speed" id="<?= $id_prefix ?>_speed" placeholder="e.g. 100M/100M" required>
             </div>
             <div class="form-group">
-                <label>Price (NPR)</label>
+                <label class="form-label">Price (NPR)</label>
                 <input type="number" step="0.01" class="form-control" name="price" id="<?= $id_prefix ?>_price" required>
             </div>
             <div class="form-group">
-                <label>Validity (Days)</label>
+                <label class="form-label">Validity (Days)</label>
                 <input type="number" class="form-control" name="validity" id="<?= $id_prefix ?>_validity" value="30" required>
             </div>
-            <div class="form-group" style="grid-column: span 2;">
-                <label>Total Data Quota (GB)</label>
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label class="form-label">Total Data Quota (GB)</label>
                 <input type="number" class="form-control" name="data_limit" id="<?= $id_prefix ?>_data_limit" value="1000">
             </div>
         </div>
 
-        <div class="fup-section">
-            <span class="fup-title"><i class="fa fa-bolt"></i> FUP Tier 1</span>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Limit (GB)</label>
+        <div style="background: var(--bg-soft); padding: 1.25rem; border-radius: var(--radius); margin-top: 1rem; border: 1px solid var(--border);">
+            <span class="text-muted fw-600 mb-3 block" style="font-size: 0.75rem; text-transform: uppercase;"><i class="fa fa-bolt"></i> Fair Usage Policy (FUP) Tiers</span>
+            
+            <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group mb-0">
+                    <label class="form-label" style="font-size: 0.75rem;">Tier 1 Limit (GB)</label>
                     <input type="number" class="form-control" name="fup1_limit" id="<?= $id_prefix ?>_fup1_limit">
                 </div>
-                <div class="form-group">
-                    <label>FUP Speed</label>
-                    <input class="form-control" name="fup1_speed" id="<?= $id_prefix ?>_fup1_speed" placeholder="e.g. 50M/50M">
+                <div class="form-group mb-0">
+                    <label class="form-label" style="font-size: 0.75rem;">Tier 1 Speed</label>
+                    <input class="form-control" name="fup1_speed" id="<?= $id_prefix ?>_fup1_speed" placeholder="e.g. 50M">
                 </div>
             </div>
-        </div>
 
-        <div class="fup-section">
-            <span class="fup-title"><i class="fa fa-bolt"></i> FUP Tier 2</span>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Limit (GB)</label>
+            <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div class="form-group mb-0">
+                    <label class="form-label" style="font-size: 0.75rem;">Tier 2 Limit (GB)</label>
                     <input type="number" class="form-control" name="fup2_limit" id="<?= $id_prefix ?>_fup2_limit">
                 </div>
-                <div class="form-group">
-                    <label>FUP Speed</label>
-                    <input class="form-control" name="fup2_speed" id="<?= $id_prefix ?>_fup2_speed" placeholder="e.g. 20M/20M">
+                <div class="form-group mb-0">
+                    <label class="form-label" style="font-size: 0.75rem;">Tier 2 Speed</label>
+                    <input class="form-control" name="fup2_speed" id="<?= $id_prefix ?>_fup2_speed" placeholder="e.g. 20M">
                 </div>
             </div>
-        </div>
 
-        <div class="fup-section">
-            <span class="fup-title"><i class="fa fa-bolt"></i> FUP Tier 3</span>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Limit (GB)</label>
+            <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group mb-0">
+                    <label class="form-label" style="font-size: 0.75rem;">Tier 3 Limit (GB)</label>
                     <input type="number" class="form-control" name="fup3_limit" id="<?= $id_prefix ?>_fup3_limit">
                 </div>
-                <div class="form-group">
-                    <label>FUP Speed</label>
-                    <input class="form-control" name="fup3_speed" id="<?= $id_prefix ?>_fup3_speed" placeholder="e.g. 10M/10M">
+                <div class="form-group mb-0">
+                    <label class="form-label" style="font-size: 0.75rem;">Tier 3 Speed</label>
+                    <input class="form-control" name="fup3_speed" id="<?= $id_prefix ?>_fup3_speed" placeholder="e.g. 10M">
                 </div>
             </div>
         </div>
 
-        <button type="submit" name="<?= $isEdit?'edit':'add' ?>" class="btn btn-primary" style="width: 100%; margin-top: 20px; padding: 12px; font-weight: 700;">
-            <i class="fa fa-save"></i> <?= $isEdit?'Update':'Save' ?> Plan
+        <button type="submit" name="<?= $isEdit?'edit':'add' ?>" class="btn btn-primary w-full mt-4" style="padding: 1rem;">
+            <i class="fa fa-save"></i> <?= $isEdit?'Update':'Create' ?> Package
         </button>
     </form>
 <?php }
@@ -148,129 +151,124 @@ include 'includes/sidebar.php';
 include 'includes/topbar.php';
 ?>
 
-<style>
-    .plans-container { padding: 25px; }
-    .table-card { background: #fff; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; overflow: hidden; }
-    table { width: 100%; border-collapse: collapse; text-align: left; }
-    th { background: #f8fafc; padding: 15px 20px; font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; }
-    td { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #1e293b; }
-    tr:hover { background: #f8fafc; }
+<div class="animate-fade-in">
     
-    .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); overflow-y: auto; }
-    .modal-content { background: #fff; margin: 2% auto; padding: 0; border-radius: 15px; width: 90%; max-width: 650px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); animation: slideDown 0.3s ease-out; }
-    @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-    .modal-header { padding: 20px 25px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
-    .modal-body { padding: 25px; }
-    
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 15px; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #475569; font-size: 13px; }
-    .form-control { width: 100%; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; outline: none; }
-    
-    .fup-section { background: #f8fafc; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px dashed #cbd5e1; }
-    .fup-title { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 10px; display: block; }
-
-    .plan-tab-btn { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: 600; }
-    .plan-tab-btn.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
-</style>
-
-<div class="flex-between mb-25 animate-fade-in">
-    <div>
-        <h2 class="h3 mb-5">Service Packages & Plans</h2>
-        <p class="text-muted small">Manage bandwidth packages, pricing, and FUP policies</p>
-    </div>
-    <div style="display: flex; gap: 10px;">
-        <div class="btn-group">
-            <button onclick="showPlanTab('list')" class="btn btn-secondary active" id="tab-btn-list">Package List</button>
-            <button onclick="showPlanTab('fuptest')" class="btn btn-secondary" id="tab-btn-fuptest">FUP Test</button>
+    <div class="flex-between mb-4 flex-wrap gap-4">
+        <div>
+            <h1 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">Service Packages & Plans</h1>
+            <p class="text-muted" style="font-size: 0.875rem;">Manage bandwidth packages, pricing, and FUP policies</p>
         </div>
-        <button onclick="openModal('addPlanModal')" class="btn btn-primary"><i class="fa fa-plus-circle"></i> Create Package</button>
-    </div>
-</div>
-
-<div id="plan-list-tab" class="plan-tab-content animate-fade-in stagger-1">
-    <div class="table-box shadow-sm">
-        <table>
-            <thead>
-                <tr>
-                    <th>Package / Plan Name</th>
-                    <th>Base Speed</th>
-                    <th>FUP Tiers</th>
-                    <th>Price</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                    <?php while($p = $plans_res->fetch_assoc()): ?>
-                    <tr>
-                        <td><b><?= htmlspecialchars($p['name']) ?></b></td>
-                        <td><span class="badge" style="background:#eff6ff; color:#3b82f6;"><?= htmlspecialchars($p['speed']) ?></span></td>
-                        <td>
-                            <div style="font-size: 11px; line-height: 1.4;">
-                                <?php if($p['fup1_limit'] > 0): ?>
-                                    <span style="color:#64748b;">T1: <?= round($p['fup1_limit']/1073741824) ?>GB &rarr; <?= $p['fup1_speed'] ?></span><br>
-                                <?php endif; ?>
-                                <?php if($p['fup2_limit'] > 0): ?>
-                                    <span style="color:#64748b;">T2: <?= round($p['fup2_limit']/1073741824) ?>GB &rarr; <?= $p['fup2_speed'] ?></span><br>
-                                <?php endif; ?>
-                                <?php if($p['fup3_limit'] > 0): ?>
-                                    <span style="color:#64748b;">T3: <?= round($p['fup3_limit']/1073741824) ?>GB &rarr; <?= $p['fup3_speed'] ?></span>
-                                <?php endif; ?>
-                            </div>
-                        </td>
-                        <td><span class="badge" style="background:#f0fdf4; color:#16a34a;">NPR <?= number_format($p['price']) ?></span></td>
-                        <td class="text-end">
-                            <button onclick='openEditModal(<?= json_encode($p) ?>)' class="btn btn-sm btn-secondary"><i class="fa fa-edit"></i></button>
-                            <a href="?del=<?= $p['id'] ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete plan?')"><i class="fa fa-trash"></i></a>
-                        </td>
-                    </tr>
-                    <?php endwhile; ?>
-                </tbody>
-            </table>
+        <div class="flex gap-2">
+            <div class="btn-group" style="display: flex; background: var(--bg-soft); padding: 0.25rem; border-radius: var(--radius);">
+                <button onclick="showPlanTab('list')" class="btn btn-secondary btn-sm active" id="tab-btn-list" style="border:none;">Package List</button>
+                <button onclick="showPlanTab('fuptest')" class="btn btn-secondary btn-sm" id="tab-btn-fuptest" style="border:none;">FUP Test</button>
+            </div>
+            <button onclick="openModal('addPlanModal')" class="btn btn-primary"><i class="fa fa-plus-circle"></i> Create Package</button>
         </div>
     </div>
 
-    <div id="plan-fuptest-tab" class="plan-tab-content animate-fade-in" style="display:none;">
-        <div class="card shadow-sm" style="height: 800px;">
-            <iframe src="fup_test.php" style="width:100%; height:100%; border:none; border-radius:15px;"></iframe>
+    <div id="plan-list-tab" class="plan-tab-content">
+        <div class="card">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Package Info</th>
+                            <th>Base Speed</th>
+                            <th>FUP Policies</th>
+                            <th>Price</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($plans_res && $plans_res->num_rows > 0): ?>
+                            <?php while($p = $plans_res->fetch_assoc()): ?>
+                            <tr>
+                                <td>
+                                    <div class="fw-600"><?= htmlspecialchars($p['name']) ?></div>
+                                    <div class="text-muted" style="font-size: 0.75rem;"><?= $p['validity'] ?> Days Validity</div>
+                                </td>
+                                <td><span class="badge badge-info"><?= htmlspecialchars($p['speed']) ?></span></td>
+                                <td>
+                                    <div style="font-size: 0.75rem; line-height: 1.6;">
+                                        <?php if($p['fup1_limit'] > 0): ?>
+                                            <div><span class="text-muted">T1:</span> <?= round($p['fup1_limit']/1073741824) ?>GB &rarr; <b><?= $p['fup1_speed'] ?></b></div>
+                                        <?php endif; ?>
+                                        <?php if($p['fup2_limit'] > 0): ?>
+                                            <div><span class="text-muted">T2:</span> <?= round($p['fup2_limit']/1073741824) ?>GB &rarr; <b><?= $p['fup2_speed'] ?></b></div>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-success">NPR <?= number_format($p['price']) ?></span></td>
+                                <td style="text-align: right;">
+                                    <div class="flex gap-2 justify-end">
+                                        <button onclick='openEditModal(<?= json_encode($p) ?>)' class="btn btn-secondary btn-sm" title="Edit" style="padding: 0.4rem; width: 32px; color: var(--success);">
+                                            <i class="fa fa-edit"></i>
+                                        </button>
+                                        <a href="?del=<?= $p['id'] ?>" class="btn btn-secondary btn-sm" title="Delete" style="padding: 0.4rem; width: 32px; color: var(--danger);" onclick="return confirm('Delete plan?')">
+                                            <i class="fa fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr><td colspan="5" style="text-align: center; padding: 4rem; color: var(--text-muted);">No service packages configured.</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="plan-fuptest-tab" class="plan-tab-content" style="display:none;">
+        <div class="card" style="height: 700px; padding: 0; overflow: hidden;">
+            <iframe src="fup_test.php" style="width:100%; height:100%; border:none;"></iframe>
         </div>
     </div>
 </div>
 
 <!-- Modals -->
-<div id="addPlanModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header"><h3>Create New Package / Plan</h3><span onclick="closeModal('addPlanModal')" style="cursor:pointer;">&times;</span></div>
+<div id="addPlanModal" class="modal-overlay" onclick="closeModal('addPlanModal')">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fa fa-plus-circle text-primary"></i> Create New Package</h3>
+            <button class="modal-close" onclick="closeModal('addPlanModal')">&times;</button>
+        </div>
         <div class="modal-body"><?php renderPlanForm('add', false); ?></div>
     </div>
 </div>
 
-<div id="editPlanModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header"><h3>Edit Package / Plan</h3><span onclick="closeModal('editPlanModal')" style="cursor:pointer;">&times;</span></div>
+<div id="editPlanModal" class="modal-overlay" onclick="closeModal('editPlanModal')">
+    <div class="modal" onclick="event.stopPropagation()" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fa fa-edit text-primary"></i> Edit Package Configuration</h3>
+            <button class="modal-close" onclick="closeModal('editPlanModal')">&times;</button>
+        </div>
         <div class="modal-body"><?php renderPlanForm('edit', true); ?></div>
     </div>
 </div>
 
 <script>
 function openModal(id) {
-    var modal = document.getElementById(id);
-    if(modal) modal.style.display = 'block';
+    document.getElementById(id).classList.add('show');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeModal(id) {
-    var modal = document.getElementById(id);
-    if(modal) modal.style.display = 'none';
+    document.getElementById(id).classList.remove('show');
+    document.body.style.overflow = 'auto';
 }
 
 function showPlanTab(tab) {
-    document.querySelectorAll('.plan-tab-content').forEach(function(el) { el.style.display = 'none'; });
-    document.querySelectorAll('.plan-tab-btn').forEach(function(el) { el.classList.remove('active'); });
+    document.querySelectorAll('.plan-tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.btn-group .btn').forEach(el => el.classList.remove('active', 'btn-primary'));
+    document.querySelectorAll('.btn-group .btn').forEach(el => el.classList.add('btn-secondary'));
     
-    var content = document.getElementById('plan-' + tab + '-tab');
-    var btn = document.getElementById('tab-btn-' + tab);
-    if(content) content.style.display = 'block';
-    if(btn) btn.classList.add('active');
+    document.getElementById('plan-' + tab + '-tab').style.display = 'block';
+    const btn = document.getElementById('tab-btn-' + tab);
+    btn.classList.remove('btn-secondary');
+    btn.classList.add('active', 'btn-primary');
 }
 
 function openEditModal(p) {
@@ -288,12 +286,11 @@ function openEditModal(p) {
     document.getElementById('edit_fup3_speed').value = p.fup3_speed;
     openModal('editPlanModal');
 }
-
-window.onclick = function(event) {
-    if (event.target.className === 'modal') {
-        event.target.style.display = 'none';
-    }
-}
 </script>
+
+<style>
+/* Local overrides for plan tabs if needed */
+.plan-tab-content { animation: fadeIn 0.3s ease-out; }
+</style>
 
 <?php include 'includes/footer.php'; ?>
