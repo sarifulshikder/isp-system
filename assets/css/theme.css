@@ -153,21 +153,13 @@ body {
 .badge-info { background: var(--info-soft); color: var(--info); }
 .badge-warning { background: var(--warning-soft); color: var(--warning); }
 
-/* Forms - Dark Mode Overrides */
-body.dark .form-control {
-    background: #0a0f1d;
-    color: #e2e8f0;
-    border-color: #334155;
-}
-body.dark .form-control:focus {
-    border-color: var(--primary);
-}
-body.dark .form-label {
-    color: #cbd5e1;
-}
-body.dark ::placeholder {
-    color: #475569;
-}
+/* Dark Mode Overrides for Components */
+body.dark .card-title { color: #f1f5f9; }
+body.dark .text-muted { color: #cbd5e1; }
+body.dark .stat-label { color: #94a3b8; }
+body.dark .stat-value { color: #f8fafc; }
+body.dark .btn-secondary { background: #1e293b; color: #f1f5f9; border-color: #334155; }
+body.dark .btn-secondary:hover { background: #334155; }
 
 /* Tables */
 .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
