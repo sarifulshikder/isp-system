@@ -57,18 +57,22 @@
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark Mode Palette */
+/* Dark Mode Palette (Refined) */
 body.dark {
-    --bg-main: #020617;
-    --bg-card: #0f172a;
-    --bg-sidebar: #020617;
+    --bg-main: #0a0f1d;
+    --bg-card: #151d2e;
+    --bg-sidebar: #050a14;
     --bg-soft: #1e293b;
-    --text-main: #f1f5f9;
+    
+    /* Text - Increased contrast for legibility */
+    --text-main: #e2e8f0; 
     --text-muted: #94a3b8;
     --text-light: #64748b;
-    --border: #1e293b;
-    --border-light: #0f172a;
-    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+    --border: #2d3748;
+    --border-light: #1e293b;
+    
+    /* Shadows - Softer for dark mode */
+    --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.4);
 }
 
 /* Reset & Base */
@@ -149,19 +153,21 @@ body {
 .badge-info { background: var(--info-soft); color: var(--info); }
 .badge-warning { background: var(--warning-soft); color: var(--warning); }
 
-/* Forms */
-.form-group { margin-bottom: 1.25rem; }
-.form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.875rem; color: var(--text-main); }
-.form-control {
-    width: 100%;
-    padding: 0.625rem 0.875rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--bg-card);
-    color: var(--text-main);
-    transition: var(--transition);
+/* Forms - Dark Mode Overrides */
+body.dark .form-control {
+    background: #0a0f1d;
+    color: #e2e8f0;
+    border-color: #334155;
 }
-.form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+body.dark .form-control:focus {
+    border-color: var(--primary);
+}
+body.dark .form-label {
+    color: #cbd5e1;
+}
+body.dark ::placeholder {
+    color: #475569;
+}
 
 /* Tables */
 .table-responsive { overflow-x: auto; -webkit-overflow-scrolling: touch; }
