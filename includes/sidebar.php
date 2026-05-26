@@ -270,7 +270,7 @@
             <a href="<?= $base_path ?>api_docs.php">
                 <i class="fa fa-code"></i>API Documentation
             </a>
-            <a href="<?= $base_path ?>hotspot/admin/roles.php">
+            <a href="<?= $base_path ?>roles.php">
                 <i class="fa fa-user-shield"></i>Roles & Permissions
             </a>
         </div>

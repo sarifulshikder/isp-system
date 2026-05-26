@@ -25,6 +25,28 @@ services:
     networks:
       - isp_network
 
+  # ── FreeRADIUS ──────────────────────────────────────────
+  radius:
+    image: freeradius/freeradius-server:latest
+    container_name: isp_radius
+    restart: unless-stopped
+    ports:
+      - "1812:1812/udp"
+      - "1813:1813/udp"
+    networks:
+      - isp_network
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./radius/config:/etc/freeradius
+      - ./radius/logs:/var/log/freeradius
+    environment:
+      DB_HOST: db
+      DB_USER: isp_user
+      DB_PASS: isp_pass123
+      DB_NAME: isp_db
+
   # ── MySQL ─────────────────────────────────────────────────
   db:
     image: mysql:8.0

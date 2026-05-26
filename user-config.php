@@ -1,9 +1,13 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+$db_host = getenv('DB_HOST') ?: 'db';
+$db_user = getenv('DB_USER') ?: 'isp_user';
+$db_pass = getenv('DB_PASS') ?: 'isp_pass123';
+$db_name = getenv('DB_NAME') ?: 'isp_db';
 
-$conn = new mysqli("localhost","radius","radiuspass","radius");
-if($conn->connect_error) die("DB Error");
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
+if ($conn->connect_error) {
+    die("Database Connection Failed: " . $conn->connect_error);
+}
+$conn->set_charset('utf8mb4');
 ?>
 

@@ -15,38 +15,117 @@ include 'includes/topbar.php';
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
 
 <style>
-    #map-wrapper { position: relative; height: calc(100vh - 70px); width: 100%; }
+    #map-wrapper { position: relative; height: calc(100vh - 70px); width: 100%; overflow: hidden; }
     #map { height: 100%; width: 100%; z-index: 1; }
     
-    .map-toolbar { position: absolute; top: 20px; left: 20px; z-index: 1000; background: var(--bg-card); padding: 1.25rem; border-radius: var(--radius-lg); box-shadow: var(--shadow-md); width: 260px; border: 1px solid var(--border); }
+    /* Desktop Sidebar Style Toolbar - FORCED VISIBILITY */
+    .map-toolbar { 
+        position: absolute; 
+        top: 20px; 
+        left: 20px; 
+        z-index: 9999 !important; 
+        background: var(--bg-card) !important; 
+        padding: 1.25rem; 
+        border-radius: var(--radius-lg); 
+        box-shadow: var(--shadow-lg); 
+        width: 260px; 
+        border: 1px solid var(--border); 
+        display: block !important; 
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
     .tool-btn { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.625rem; margin-bottom: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-main); cursor: pointer; transition: var(--transition); font-size: 0.875rem; font-weight: 600; color: var(--text-main); }
     .tool-btn:hover { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
     .tool-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
     
-    /* Reusing standardized modal system */
+    .toolbar-toggle { 
+        display: none; 
+        position: absolute; 
+        bottom: 30px; 
+        right: 30px; 
+        z-index: 10000 !important; 
+        width: 60px; 
+        height: 60px; 
+        border-radius: 50%; 
+        background: var(--primary) !important; 
+        color: white !important; 
+        border: 3px solid white; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3); 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 1.5rem; 
+        cursor: pointer; 
+    }
+
+    @media (max-width: 1024px) {
+        #map-wrapper { height: calc(100vh - 60px); }
+        .toolbar-toggle { display: flex !important; }
+        .map-toolbar { 
+            top: auto !important; 
+            bottom: 100px !important; 
+            left: 15px !important; 
+            right: 15px !important;
+            width: auto !important; 
+            max-height: 60vh; 
+            overflow-y: auto; 
+            display: none !important; 
+            opacity: 0 !important; 
+            transform: translateY(20px);
+        }
+        .map-toolbar.show { 
+            display: block !important; 
+            opacity: 1 !important; 
+            visibility: visible !important; 
+            transform: translateY(0) !important;
+        }
+        
+        .ftth-modal-content {
+            width: 95% !important;
+            margin: 10px auto !important;
+            max-height: 90vh;
+        }
+        
+        .grid { grid-template-columns: 1fr !important; }
+    }
+
+    /* Standardized modal and table styles */
     .ftth-modal-content { background: var(--bg-card); color: var(--text-main); }
     .modal-header { border-bottom: 1px solid var(--border); }
-    .splicing-table th { background: var(--bg-soft); color: var(--text-muted); }
-    .splicing-table td { border: 1px solid var(--border); }
+    .splicing-table th { background: var(--bg-soft); color: var(--text-muted); font-size: 11px; }
+    .splicing-table td { border: 1px solid var(--border); padding: 5px !important; }
     .color-select { border: 2px solid var(--border) !important; padding: 4px !important; }
 </style>
 
 <div id="map-wrapper">
     <div id="map"></div>
-    <div class="map-toolbar">
-        <h4 style="margin:0 0 1rem 0; font-size: 1rem; color:var(--text-main);">Infrastructure Editor</h4>
-        <button class="tool-btn" data-type="OLT" onclick="setMode('add_node', this)"><i class="fa fa-server"></i> OLT Node</button>
-        <button class="tool-btn" data-type="POLE" onclick="setMode('add_node', this)"><i class="fa fa-broadcast-tower"></i> Pole</button>
-        <button class="tool-btn" data-type="MASTER_BOX" onclick="setMode('add_node', this)"><i class="fa fa-box"></i> Master Box</button>
-        <button class="tool-btn" data-type="DB_BOX" onclick="setMode('add_node', this)"><i class="fa fa-boxes"></i> DB Box</button>
-        <button class="tool-btn" data-type="ENCLOSURE" onclick="setMode('add_node', this)"><i class="fa fa-shield-halved"></i> Enclosure</button>
-        <button class="tool-btn" data-type="JOINT" onclick="setMode('add_node', this)"><i class="fa fa-link"></i> Joint / Tiffin</button>
+    
+    <!-- Mobile Toggle Button -->
+    <button class="toolbar-toggle" onclick="toggleToolbar()" title="Toggle Infrastructure Tools">
+        <i class="fa fa-tools"></i>
+    </button>
+
+    <!-- Main Toolbar -->
+    <div class="map-toolbar" id="mainToolbar">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h4 style="margin:0; font-size: 1rem; color:var(--text-main);">Infrastructure Editor</h4>
+            <button class="d-lg-none" onclick="toggleToolbar(false)" style="background:none; border:none; color:var(--text-muted);"><i class="fa fa-times"></i></button>
+        </div>
+        
+        <button class="tool-btn" data-type="OLT" onclick="setMode('add_node', this); if(window.innerWidth <= 1024) toggleToolbar(false);"><i class="fa fa-server"></i> OLT Node</button>
+        <button class="tool-btn" data-type="POLE" onclick="setMode('add_node', this); if(window.innerWidth <= 1024) toggleToolbar(false);"><i class="fa fa-broadcast-tower"></i> Pole</button>
+        <button class="tool-btn" data-type="MASTER_BOX" onclick="setMode('add_node', this); if(window.innerWidth <= 1024) toggleToolbar(false);"><i class="fa fa-box"></i> Master Box</button>
+        <button class="tool-btn" data-type="DB_BOX" onclick="setMode('add_node', this); if(window.innerWidth <= 1024) toggleToolbar(false);"><i class="fa fa-boxes"></i> DB Box</button>
+        <button class="tool-btn" data-type="ENCLOSURE" onclick="setMode('add_node', this); if(window.innerWidth <= 1024) toggleToolbar(false);"><i class="fa fa-shield-halved"></i> Enclosure</button>
+        <button class="tool-btn" data-type="JOINT" onclick="setMode('add_node', this); if(window.innerWidth <= 1024) toggleToolbar(false);"><i class="fa fa-link"></i> Joint / Tiffin</button>
+        
         <hr style="border:0; border-top:1px solid var(--border); margin:0.75rem 0;">
-        <button class="tool-btn" onclick="openFaultTool()"><i class="fa fa-magnifying-glass-location"></i> Fault Localizer</button>
-        <button class="tool-btn" id="fiberBtn" onclick="toggleFiberDrawing()"><i class="fa fa-pen-nib"></i> Trace Fiber</button>
-        <button class="tool-btn" onclick="openLeaseManager()"><i class="fa fa-handshake"></i> Wire Leases</button>
+        
+        <button class="tool-btn" onclick="openFaultTool(); if(window.innerWidth <= 1024) toggleToolbar(false);"><i class="fa fa-magnifying-glass-location"></i> Fault Localizer</button>
+        <button class="tool-btn" id="fiberBtn" onclick="toggleFiberDrawing(); if(window.innerWidth <= 1024) toggleToolbar(false);"><i class="fa fa-pen-nib"></i> Trace Fiber</button>
+        <button class="tool-btn" onclick="openLeaseManager(); if(window.innerWidth <= 1024) toggleToolbar(false);"><i class="fa fa-handshake"></i> Wire Leases</button>
         <a href="map_export.php" class="tool-btn" style="text-decoration:none;"><i class="fa fa-file-export"></i> Export KML</a>
-        <button class="tool-btn" onclick="refreshData()"><i class="fa fa-sync"></i> Refresh Data</button>
+        <button class="tool-btn" onclick="refreshData(); if(window.innerWidth <= 1024) toggleToolbar(false);"><i class="fa fa-sync"></i> Refresh Data</button>
     </div>
 </div>
 
@@ -163,8 +242,6 @@ include 'includes/topbar.php';
         // Populate Routes Dropdown
         let sel = document.getElementById('leaseRouteId');
         sel.innerHTML = '<option value="">-- Select Fiber Route --</option>';
-        // We assume 'data.routes' is globally available from map initialization, or we fetch again
-        // Ideally, we fetch fresh list
         fetch('map_api.php?action=get_data').then(r=>r.json()).then(d => {
             d.routes.forEach(r => {
                 let opt = document.createElement('option');
@@ -239,17 +316,31 @@ include 'includes/topbar.php';
         "Yellow": "#FFFF00", "Violet": "#EE82EE", "Rose": "#FFC0CB", "Aqua": "#00FFFF"
     };
 
-    var map = L.map('map').setView([27.7172, 85.3240], 15);
+    var map = L.map('map', { zoomControl: false }).setView([27.7172, 85.3240], 15);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     var googleStreets = L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'], attribution: 'Google'});
     var googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'], attribution: 'Google'});
     var googleTerrain = L.tileLayer('http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}',{maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3'], attribution: 'Google'});
     googleHybrid.addTo(map);
-    L.control.layers({"Satellite": googleHybrid, "Roadmap": googleStreets, "Terrain": googleTerrain}).addTo(map);
 
-    var markersLayer = L.layerGroup().addTo(map), routesLayer = L.layerGroup().addTo(map), currentMode = null, currentNodeType = null, allNodes = [];
+    var markersLayer = L.layerGroup().addTo(map);
+    var routesLayer = L.layerGroup().addTo(map);
+    var customersLayer = L.layerGroup().addTo(map);
+    var faultsLayer = L.layerGroup().addTo(map);
 
-    var drawControl = new L.Control.Draw({ draw: { polyline: { shapeOptions: { color: '#3b82f6', weight: 4 } }, polygon: false, circle: false, rectangle: false, marker: false, circlemarker: false } });
+    L.control.layers(
+        { "Satellite": googleHybrid, "Roadmap": googleStreets, "Terrain": googleTerrain },
+        { "Infrastructure": markersLayer, "Fiber Routes": routesLayer, "Customers": customersLayer, "Active Faults": faultsLayer },
+        { position: 'topright' }
+    ).addTo(map);
+
+    var currentMode = null, currentNodeType = null, allNodes = [];
+
+    var drawControl = new L.Control.Draw({ 
+        position: 'topright',
+        draw: { polyline: { shapeOptions: { color: '#3b82f6', weight: 4 } }, polygon: false, circle: false, rectangle: false, marker: false, circlemarker: false } 
+    });
     map.addControl(drawControl);
 
     function updateDropdownColor(sel) {
@@ -384,7 +475,12 @@ include 'includes/topbar.php';
 
     function refreshData() {
         fetch('map_api.php?action=get_data').then(r => r.json()).then(data => {
-            allNodes = data.nodes; markersLayer.clearLayers(); routesLayer.clearLayers();
+            allNodes = data.nodes; 
+            markersLayer.clearLayers(); 
+            routesLayer.clearLayers();
+            customersLayer.clearLayers();
+            faultsLayer.clearLayers();
+
             data.nodes.forEach(n => {
                 let colors = { 'OLT': '#ef4444', 'POLE': '#64748b', 'MASTER_BOX': '#f59e0b', 'DB_BOX': '#3b82f6', 'ENCLOSURE': '#8b5cf6', 'JOINT': '#10b981' };
                 let icons = { 'OLT': 'fa-server', 'POLE': 'fa-broadcast-tower', 'MASTER_BOX': 'fa-box', 'DB_BOX': 'fa-boxes', 'ENCLOSURE': 'fa-shield-halved', 'JOINT': 'fa-link' };
@@ -448,7 +544,7 @@ include 'includes/topbar.php';
                     color: "#fff", 
                     weight: 2, 
                     fillOpacity: 1 
-                }).addTo(map).bindPopup(`
+                }).addTo(customersLayer).bindPopup(`
                     <div style="text-align:center; min-width:150px;">
                         <div style="margin-bottom:8px;">
                             <b style="font-size:14px;">${c.full_name}</b><br>
@@ -469,12 +565,11 @@ include 'includes/topbar.php';
                 `);
             });
             
-            // Render Active Faults
             if(data.faults) {
                 data.faults.forEach(f => {
                     L.marker([f.predicted_lat, f.predicted_lng], {
                         icon: L.divIcon({ className: '', html: `<div style="color:#ef4444; font-size:20px; animation: pulse 1s infinite;"><i class="fa fa-bolt"></i></div>` })
-                    }).addTo(map).bindPopup(`<b>BREAK POINT</b><br>${f.description}`);
+                    }).addTo(faultsLayer).bindPopup(`<b>BREAK POINT</b><br>${f.description}`);
                 });
             }
         });
@@ -484,17 +579,26 @@ include 'includes/topbar.php';
     function deleteRoute(id) { if(confirm('Delete?')) fetch('map_api.php?action=delete_route', { method: 'POST', body: new URLSearchParams({id}) }).then(() => refreshData()); }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; setMode(null, null); }
 
-    // --- Pillar 2: GIS Intelligence Helpers ---
+    function toggleToolbar(force) {
+        let tb = document.getElementById('mainToolbar');
+        if (typeof force === 'boolean') {
+            if (force) tb.classList.add('show');
+            else tb.classList.remove('show');
+        } else {
+            tb.classList.toggle('show');
+        }
+    }
+
     function calculatePathLength(latlngs) {
         let total = 0;
         for (let i = 0; i < latlngs.length - 1; i++) {
             total += latlngs[i].distanceTo(latlngs[i+1]);
         }
-        return total; // meters
+        return total;
     }
 
     function predictSignalLoss(lengthM, spliceCount = 2) {
-        const lossPerKm = 0.35; // Standard 1310nm
+        const lossPerKm = 0.35;
         const spliceLoss = 0.1;
         return (lengthM / 1000 * lossPerKm) + (spliceCount * spliceLoss);
     }

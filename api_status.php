@@ -1,58 +1,75 @@
 <?php
 include 'config.php';
-include 'includes/genieacs_api.php';
-
+include 'config/genieacs.php';
 header('Content-Type: application/json');
 
-// 1. Database Details
-$db_online = (isset($conn) && !$conn->connect_error);
-$db_uptime = 0;
-$db_version = "Unknown";
-if($db_online) {
-    $uptime_res = $conn->query("SHOW STATUS LIKE 'Uptime'");
-    $db_uptime = $uptime_res->fetch_assoc()['Value'] ?? 0;
-    $ver_res = $conn->query("SELECT VERSION() as ver");
-    $db_version = $ver_res->fetch_assoc()['ver'] ?? "N/A";
+// 1. DB Stats
+$total   = $conn->query("SELECT COUNT(*) as c FROM customers")->fetch_assoc()['c'];
+$active  = $conn->query("SELECT COUNT(*) as c FROM customers WHERE status='active'")->fetch_assoc()['c'];
+$expired = $conn->query("SELECT COUNT(*) as c FROM customers WHERE status='expired'")->fetch_assoc()['c'];
+$tickets = $conn->query("SELECT COUNT(*) as c FROM tickets WHERE status='open'")->fetch_assoc()['c'];
+$revenue = $conn->query("SELECT COALESCE(SUM(amount),0) as r FROM recharge WHERE MONTH(created_at)=MONTH(NOW()) AND YEAR(created_at)=YEAR(NOW())")->fetch_assoc()['r'];
+
+// 2. DB Status
+$db_version  = $conn->query("SELECT VERSION() as v")->fetch_assoc()['v'];
+$db_uptime_s = $conn->query("SHOW STATUS LIKE 'Uptime'")->fetch_assoc()['Value'];
+$db_uptime   = round($db_uptime_s / 3600, 1);
+
+// 3. RADIUS — Docker DNS check only (no TCP block)
+$radius_ip     = gethostbyname('isp_radius');
+$radius_online = ($radius_ip !== 'isp_radius'); // resolve হলে container আছে
+$rad_auth = $conn->query("SELECT COUNT(*) as c FROM radpostauth WHERE reply='Access-Accept' AND authdate >= CURDATE()")->fetch_assoc()['c'] ?? 0;
+$rad_fail = $conn->query("SELECT COUNT(*) as c FROM radpostauth WHERE reply='Access-Reject' AND authdate >= CURDATE()")->fetch_assoc()['c'] ?? 0;
+
+// 4. GenieACS — 1 second timeout only
+$genieacs_online  = false;
+$genieacs_latency = 'N/A';
+$ch = curl_init(GENIEACS_URL . '/devices/?limit=1');
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_TIMEOUT        => 1,
+    CURLOPT_CONNECTTIMEOUT => 1,
+    CURLOPT_NOBODY         => true,
+]);
+$t1      = microtime(true);
+curl_exec($ch);
+$http    = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$elapsed = round((microtime(true) - $t1) * 1000);
+curl_close($ch);
+if ($http >= 200 && $http < 400) {
+    $genieacs_online  = true;
+    $genieacs_latency = $elapsed . 'ms';
 }
 
-// 2. FreeRADIUS Details
-$radius_process = shell_exec("pgrep freeradius || pgrep radiusd");
-$radius_online = !empty($radius_process);
-// Stats for today
-$auth_ok = $conn->query("SELECT COUNT(*) as c FROM radpostauth WHERE reply='Access-Accept' AND DATE(authdate)=CURDATE()")->fetch_assoc()['c'] ?? 0;
-$auth_fail = $conn->query("SELECT COUNT(*) as c FROM radpostauth WHERE reply='Access-Reject' AND DATE(authdate)=CURDATE()")->fetch_assoc()['c'] ?? 0;
-
-// 3. GenieACS Details
-$acs_test = genieacs_request("/devices?_limit=1");
-$acs_online = (isset($acs_test) && !isset($acs_test['error']));
-$acs_tasks = genieacs_request("/tasks?_limit=1"); // Check if task queue is moving
-$pending_tasks = is_array($acs_tasks) ? count($acs_tasks) : 0;
-
-// 4. System Info (Server)
+// 5. System Health
 $load = sys_getloadavg();
-$mem_info = shell_exec("free -m");
-$mem_lines = explode("\n", $mem_info);
-$mem_stats = preg_split('/\s+/', $mem_lines[1]);
-$mem_usage = round(($mem_stats[2] / $mem_stats[1]) * 100, 1); // Used / Total
+$cpu  = round($load[0], 2);
+$mem  = 0;
+if (file_exists('/proc/meminfo')) {
+    $meminfo = file_get_contents('/proc/meminfo');
+    preg_match('/MemTotal:\s+(\d+)/', $meminfo, $mt);
+    preg_match('/MemAvailable:\s+(\d+)/', $meminfo, $ma);
+    if ($mt && $ma) $mem = round((1 - $ma[1] / $mt[1]) * 100, 1);
+}
 
 echo json_encode([
-    'db' => [
-        'status' => $db_online ? 'Online' : 'Offline',
-        'uptime' => round($db_uptime / 3600, 1) . " hours",
-        'version' => $db_version
+    'customers' => ['total' => $total, 'active' => $active, 'expired' => $expired],
+    'tickets'   => ['open' => $tickets],
+    'revenue'   => ['monthly' => $revenue],
+    'radius'    => [
+        'process'      => $radius_online ? 'Running' : 'Stopped',
+        'auth_success' => $rad_auth,
+        'auth_fail'    => $rad_fail,
     ],
-    'radius' => [
-        'process' => $radius_online ? 'Running' : 'Stopped',
-        'auth_success' => $auth_ok,
-        'auth_fail' => $auth_fail
+    'database'  => [
+        'status'  => 'Online',
+        'uptime'  => $db_uptime . ' hours',
+        'version' => $db_version,
     ],
-    'acs' => [
-        'status' => $acs_online ? 'Online' : 'Offline',
-        'tasks' => $pending_tasks
+    'genieacs'  => [
+        'status'  => $genieacs_online ? 'Online' : 'Offline',
+        'tasks'   => 0,
+        'latency' => $genieacs_latency,
     ],
-    'system' => [
-        'cpu' => $load[0],
-        'mem_percent' => $mem_usage,
-        'uptime' => shell_exec("uptime -p")
-    ]
+    'system'    => ['cpu' => $cpu, 'ram' => $mem],
 ]);

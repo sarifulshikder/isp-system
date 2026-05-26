@@ -13,7 +13,9 @@ if (!$db_pass) {
 
 $db_name = getenv('DB_NAME') ?: 'isp_db';
 
-$base_path = './';
+if (!isset($base_path)) {
+    $base_path = './';
+}
 $site_url  = 'http://localhost';
 
 // Connection

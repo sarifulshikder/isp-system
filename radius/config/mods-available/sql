@@ -1,0 +1,32 @@
+sql {
+    dialect = "mysql"
+    driver = "rlm_sql_mysql"
+
+    server = "db"
+    port = 3306
+    login = "isp_user"
+    password = "isp_pass123"
+    radius_db = "isp_db"
+
+    acct_table1 = "radacct"
+    acct_table2 = "radacct"
+    postauth_table = "radpostauth"
+    authcheck_table = "radcheck"
+    authreply_table = "radreply"
+    groupcheck_table = "radgroupcheck"
+    groupreply_table = "radgroupreply"
+    usergroup_table = "radusergroup"
+
+    read_clients = yes
+    client_table = "nas"
+
+    pool {
+        start = 5
+        min = 4
+        max = 10
+        spare = 3
+        uses = 0
+        lifetime = 0
+        idle_timeout = 60
+    }
+}

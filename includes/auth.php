@@ -69,11 +69,11 @@ function isSuperAdmin(){
 }
 
 function isBranchAdmin(){
-    return ($_SESSION['role'] ?? '') === 'branchadmin';
+    return ($_SESSION['role'] ?? '') === 'manager';
 }
 
 function isStaff(){
-    return ($_SESSION['role'] ?? '') === 'staff';
+    return ($_SESSION['role'] ?? '') === 'support';
 }
 
 /* Log activity function */

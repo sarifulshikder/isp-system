@@ -183,15 +183,15 @@ $message = '';
                                         <td><strong><?= htmlspecialchars($l['username']) ?></strong></td>
                                         <td><span class="log-level info"><?= strtoupper($l['action']) ?></span></td>
                                         <td><?= htmlspecialchars($l['description']) ?></td>
-                                        <td><code><?= $l['ip_address'] ?></code></td>
+                                        <td><code><?= $l['ip'] ?></code></td>
                                     </tr>
                                 <?php endwhile;
                                 
                             } elseif ($log_type == 'login') {
-                                $logs = $conn->query("SELECT * FROM login_attempts ORDER BY attempt_time DESC LIMIT 500");
+                                $logs = $conn->query("SELECT * FROM login_attempts ORDER BY attempted_at DESC LIMIT 500");
                                 while ($l = $logs->fetch_assoc()): ?>
                                     <tr>
-                                        <td><?= date('M d, H:i', strtotime($l['attempt_time'])) ?></td>
+                                        <td><?= date('M d, H:i', strtotime($l['attempted_at'])) ?></td>
                                         <td><strong><?= htmlspecialchars($l['username']) ?></strong></td>
                                         <td>
                                             <?php if($l['status'] == 'success'): ?>
@@ -200,7 +200,7 @@ $message = '';
                                                 <span class="log-level danger">Failed</span>
                                             <?php endif; ?>
                                         </td>
-                                        <td><code><?= $l['ip_address'] ?? '-' ?></code></td>
+                                        <td><code><?= $l['ip'] ?? '-' ?></code></td>
                                         <td><?= htmlspecialchars($l['message'] ?? '-') ?></td>
                                     </tr>
                                 <?php endwhile;

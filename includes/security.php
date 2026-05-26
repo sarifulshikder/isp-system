@@ -24,15 +24,9 @@ class Security {
     }
     
     public function getClientIP() {
-        $ip = '';
-        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } else {
-            $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
-        }
-        return $ip;
+        // In Docker environment without a trusted proxy, REMOTE_ADDR is most reliable.
+        // We only trust X-Forwarded-For if we know we are behind a trusted proxy.
+        return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
     }
     
     public function getUserAgent() {
@@ -44,7 +38,7 @@ class Security {
             SELECT COUNT(*) as attempts 
             FROM login_attempts 
             WHERE username = ? 
-            AND attempt_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
+            AND attempted_at > DATE_SUB(NOW(), INTERVAL ? MINUTE)
             AND status = 'blocked'
         ");
         $stmt->bind_param("si", $username, $this->lockoutDuration);
@@ -59,7 +53,7 @@ class Security {
             SELECT COUNT(*) as attempts 
             FROM login_attempts 
             WHERE username = ? 
-            AND attempt_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
+            AND attempted_at > DATE_SUB(NOW(), INTERVAL ? MINUTE)
             AND status = 'failed'
         ");
         $stmt->bind_param("si", $username, $this->lockoutDuration);
@@ -84,7 +78,7 @@ class Security {
         }
         
         $stmt = $this->conn->prepare("
-            INSERT INTO login_attempts (username, ip_address, user_agent, status)
+            INSERT INTO login_attempts (username, ip, user_agent, status)
             VALUES (?, ?, ?, ?)
         ");
         $stmt->bind_param("ssss", $username, $ip, $userAgent, $statusValue);
@@ -93,14 +87,14 @@ class Security {
         return $statusValue === 'blocked';
     }
     
-    public function logActivity($userId, $username, $action, $description = '') {
+    public function logActivity($adminId, $username, $action, $description = '') {
         $ip = $this->getClientIP();
         
         $stmt = $this->conn->prepare("
-            INSERT INTO activity_log (user_id, username, action, description, ip_address)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO activity_log (admin_id, action, description, ip)
+            VALUES (?, ?, ?, ?)
         ");
-        $stmt->bind_param("issss", $userId, $username, $action, $description, $ip);
+        $stmt->bind_param("isss", $adminId, $action, $description, $ip);
         $stmt->execute();
     }
     
@@ -108,7 +102,7 @@ class Security {
         $stmt = $this->conn->prepare("
             SELECT * FROM login_attempts 
             WHERE username = ?
-            ORDER BY attempt_time DESC
+            ORDER BY attempted_at DESC
             LIMIT ?
         ");
         $stmt->bind_param("si", $username, $limit);
@@ -116,15 +110,15 @@ class Security {
         return $stmt->get_result();
     }
     
-    public function getActivityLog($userId = null, $limit = 50) {
-        if ($userId) {
+    public function getActivityLog($adminId = null, $limit = 50) {
+        if ($adminId) {
             $stmt = $this->conn->prepare("
                 SELECT * FROM activity_log 
-                WHERE user_id = ?
+                WHERE admin_id = ?
                 ORDER BY created_at DESC
                 LIMIT ?
             ");
-            $stmt->bind_param("ii", $userId, $limit);
+            $stmt->bind_param("ii", $adminId, $limit);
             $stmt->execute();
             return $stmt->get_result();
         } else {
@@ -139,7 +133,7 @@ class Security {
     public function clearOldAttempts($days = 30) {
         $this->conn->query("
             DELETE FROM login_attempts 
-            WHERE attempt_time < DATE_SUB(NOW(), INTERVAL $days DAY)
+            WHERE attempted_at < DATE_SUB(NOW(), INTERVAL $days DAY)
         ");
     }
     

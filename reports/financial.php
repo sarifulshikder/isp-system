@@ -19,11 +19,14 @@ $revenue_query = "
         COUNT(*) as count,
         SUM(amount) as total
     FROM recharge 
-    WHERE DATE(created_at) BETWEEN '$start_date' AND '$end_date'
+    WHERE DATE(created_at) BETWEEN ? AND ?
     GROUP BY DATE(created_at)
     ORDER BY date ASC
 ";
-$revenue_res = $conn->query($revenue_query);
+$stmt = $conn->prepare($revenue_query);
+$stmt->bind_param("ss", $start_date, $end_date);
+$stmt->execute();
+$revenue_res = $stmt->get_result();
 
 $revenue_data = [];
 $total_revenue = 0;
@@ -44,10 +47,13 @@ $gateway_query = "
         SUM(amount) as total
     FROM wallet_transactions 
     WHERE status IN ('success', 'PAID', 'Completed')
-    AND DATE(created_at) BETWEEN '$start_date' AND '$end_date'
+    AND DATE(created_at) BETWEEN ? AND ?
     GROUP BY gateway
 ";
-$gateway_res = $conn->query($gateway_query);
+$stmt = $conn->prepare($gateway_query);
+$stmt->bind_param("ss", $start_date, $end_date);
+$stmt->execute();
+$gateway_res = $stmt->get_result();
 
 // 3. Top Paying Customers
 $top_cust_query = "
@@ -56,12 +62,15 @@ $top_cust_query = "
         COUNT(*) as count,
         SUM(amount) as total
     FROM recharge 
-    WHERE DATE(created_at) BETWEEN '$start_date' AND '$end_date'
+    WHERE DATE(created_at) BETWEEN ? AND ?
     GROUP BY username
     ORDER BY total DESC
     LIMIT 5
 ";
-$top_cust_res = $conn->query($top_cust_query);
+$stmt = $conn->prepare($top_cust_query);
+$stmt->bind_param("ss", $start_date, $end_date);
+$stmt->execute();
+$top_cust_res = $stmt->get_result();
 
 include $base_path . 'includes/header.php';
 include $base_path . 'includes/sidebar.php';

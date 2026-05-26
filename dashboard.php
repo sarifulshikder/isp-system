@@ -230,9 +230,9 @@ include 'includes/topbar.php';
 function updateMonitor() {
     $.getJSON('api_status.php', function(data) {
         // DB
-        $('#db-uptime').text(data.db.uptime);
-        $('#db-version').text(data.db.version);
-        $('#db-status').text(data.db.status).attr('class', data.db.status === 'Online' ? 'badge badge-success' : 'badge badge-danger');
+        $('#db-uptime').text(data.database.uptime);
+        $('#db-version').text(data.database.version);
+        $('#db-status').text(data.database.status).attr('class', data.database.status === 'Online' ? 'badge badge-success' : 'badge badge-danger');
         
         // RADIUS
         $('#rad-auth').text(data.radius.auth_success);
@@ -240,14 +240,14 @@ function updateMonitor() {
         $('#rad-status').text(data.radius.process).attr('class', data.radius.process === 'Running' ? 'badge badge-success' : 'badge badge-danger');
         
         // ACS
-        $('#acs-status').text(data.acs.status).attr('class', data.acs.status === 'Online' ? 'badge badge-success' : 'badge badge-danger');
-        $('#acs-tasks').text(data.acs.tasks + ' Pending');
+        $('#acs-status').text(data.genieacs.status).attr('class', data.genieacs.status === 'Online' ? 'badge badge-success' : 'badge badge-danger');
+        $('#acs-tasks').text(data.genieacs.tasks + ' Pending');
         
         // System
         $('#sys-cpu').text(data.system.cpu);
-        $('#sys-mem').text(data.system.mem_percent + '%');
-        $('#mem-bar').css('width', data.system.mem_percent + '%');
-        $('#sys-uptime').text('Server uptime: ' + data.system.uptime);
+        $('#sys-mem').text(data.system.ram + '%');
+        $('#mem-bar').css('width', data.system.ram + '%');
+        $('#sys-uptime').text('Server uptime: ' + 'Server uptime: N/A');
     });
 
     $.getJSON('api_network_status.php', function(data) {
