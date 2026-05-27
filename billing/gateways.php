@@ -17,35 +17,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     $gateway_id = intval($_POST['gateway_id'] ?? 0);
     
     if ($_POST['action'] == 'add_gateway') {
-        $gateway_name = $conn->real_escape_string($_POST['gateway_name']);
-        $display_name = $conn->real_escape_string($_POST['display_name']);
-        $api_key = $conn->real_escape_string($_POST['api_key']);
-        $api_secret = $conn->real_escape_string($_POST['api_secret']);
-        $merchant_id = $conn->real_escape_string($_POST['merchant_id']);
-        $public_key = $conn->real_escape_string($_POST['public_key']);
+        $name = $conn->real_escape_string($_POST['gateway_name']);
         $is_active = intval($_POST['is_active'] ?? 1);
-        $is_test_mode = intval($_POST['is_test_mode'] ?? 0);
         
-        $conn->query("INSERT INTO payment_gateways (gateway_name, display_name, api_key, api_secret, merchant_id, public_key, is_active, is_test_mode, created_at) 
-                      VALUES ('$gateway_name', '$display_name', '$api_key', '$api_secret', '$merchant_id', '$public_key', $is_active, $is_test_mode, NOW())");
+        $config = json_encode([
+            'display_name' => $_POST['display_name'] ?? '',
+            'api_key'      => $_POST['api_key'] ?? '',
+            'api_secret'   => $_POST['api_secret'] ?? '',
+            'merchant_id'  => $_POST['merchant_id'] ?? '',
+            'public_key'   => $_POST['public_key'] ?? '',
+            'password'     => $_POST['password'] ?? '',
+            'is_test_mode' => intval($_POST['is_test_mode'] ?? 0)
+        ]);
+        
+        $conn->query("INSERT INTO payment_gateways (name, is_active, config, created_at) 
+                      VALUES ('$name', $is_active, '$config', NOW())");
         $message = 'Gateway added successfully';
     }
     
     if ($_POST['action'] == 'update_gateway') {
-        $gateway_name = $conn->real_escape_string($_POST['gateway_name']);
-        $display_name = $conn->real_escape_string($_POST['display_name']);
-        $api_key = $conn->real_escape_string($_POST['api_key']);
-        $api_secret = $conn->real_escape_string($_POST['api_secret']);
-        $merchant_id = $conn->real_escape_string($_POST['merchant_id']);
-        $public_key = $conn->real_escape_string($_POST['public_key']);
+        $name = $conn->real_escape_string($_POST['gateway_name']);
         $is_active = intval($_POST['is_active'] ?? 1);
-        $is_test_mode = intval($_POST['is_test_mode'] ?? 0);
+        
+        $config = json_encode([
+            'display_name' => $_POST['display_name'] ?? '',
+            'api_key'      => $_POST['api_key'] ?? '',
+            'api_secret'   => $_POST['api_secret'] ?? '',
+            'merchant_id'  => $_POST['merchant_id'] ?? '',
+            'public_key'   => $_POST['public_key'] ?? '',
+            'password'     => $_POST['password'] ?? '',
+            'is_test_mode' => intval($_POST['is_test_mode'] ?? 0)
+        ]);
         
         $conn->query("UPDATE payment_gateways SET 
-                      gateway_name = '$gateway_name', display_name = '$display_name',
-                      api_key = '$api_key', api_secret = '$api_secret',
-                      merchant_id = '$merchant_id', public_key = '$public_key',
-                      is_active = $is_active, is_test_mode = $is_test_mode,
+                      name = '$name', is_active = $is_active, config = '$config',
                       updated_at = NOW() WHERE id = $gateway_id");
         $message = 'Gateway updated successfully';
     }
@@ -61,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
     }
 }
 
-$gateways = $conn->query("SELECT * FROM payment_gateways ORDER BY gateway_name");
+$gateways = $conn->query("SELECT * FROM payment_gateways ORDER BY name");
 
 $active_count = $conn->query("SELECT COUNT(*) as c FROM payment_gateways WHERE is_active = 1")->fetch_assoc()['c'] ?? 0;
 $inactive_count = $conn->query("SELECT COUNT(*) as c FROM payment_gateways WHERE is_active = 0")->fetch_assoc()['c'] ?? 0;
@@ -386,44 +391,46 @@ $inactive_count = $conn->query("SELECT COUNT(*) as c FROM payment_gateways WHERE
                             </tr>
                         </thead>
                         <tbody>
-                            <?php while ($gw = $gateways->fetch_assoc()): ?>
+                            <?php while ($row = $gateways->fetch_assoc()): 
+                               $config = json_decode($row['config'] ?? '{}', true);
+                               $gw = array_merge($row, $config);
+                            ?>
                             <tr>
-                                <td>
-                                    <div style="display: flex; align-items: center; gap: 10px;">
-                                        <div class="gateway-icon" style="background: #dbeafe; color: #1d4ed8;">
-                                            <i class="fas fa-credit-card"></i>
-                                        </div>
-                                        <strong><?= strtoupper($gw['gateway_name']) ?></strong>
-                                    </div>
-                                </td>
-                                <td><?= $gw['display_name'] ?></td>
-                                <td><?= $gw['merchant_id'] ?: '-' ?></td>
-                                <td>
-                                    <span class="badge <?= $gw['is_test_mode'] ? 'badge-warning' : 'badge-success' ?>">
-                                        <?= $gw['is_test_mode'] ? 'Test' : 'Live' ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge <?= $gw['is_active'] ? 'badge-success' : 'badge-danger' ?>">
-                                        <?= $gw['is_active'] ? 'Active' : 'Inactive' ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="btn-group">
-                                        <button class="btn btn-primary btn-sm" onclick="editGateway(<?= $gw['id'] ?>, '<?= $gw['gateway_name'] ?>', '<?= $gw['display_name'] ?>', '<?= $gw['merchant_id'] ?>', '<?= $gw['api_key'] ?>', '<?= $gw['api_secret'] ?>', '<?= $gw['public_key'] ?>', <?= $gw['is_active'] ?>, <?= $gw['is_test_mode'] ?>)" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn <?= $gw['is_active'] ? 'btn-warning' : 'btn-success' ?> btn-sm" onclick="submitAction('toggle_gateway', <?= $gw['id'] ?>)" title="<?= $gw['is_active'] ? 'Disable' : 'Enable' ?>">
-                                            <i class="fas <?= $gw['is_active'] ? 'fa-ban' : 'fa-check' ?>"></i>
-                                        </button>
-                                        <button class="btn btn-danger btn-sm" onclick="deleteGateway(<?= $gw['id'] ?>)" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
+                               <td>
+                                   <div style="display: flex; align-items: center; gap: 10px;">
+                                       <div class="gateway-icon" style="background: #dbeafe; color: #1d4ed8;">
+                                           <i class="fas fa-credit-card"></i>
+                                       </div>
+                                       <strong><?= strtoupper($row['name']) ?></strong>
+                                   </div>
+                               </td>
+                               <td><?= $gw['display_name'] ?? 'N/A' ?></td>
+                               <td><?= $gw['merchant_id'] ?? '-' ?></td>
+                               <td>
+                                   <span class="badge <?= ($gw['is_test_mode'] ?? false) ? 'badge-warning' : 'badge-success' ?>">
+                                       <?= ($gw['is_test_mode'] ?? false) ? 'Test' : 'Live' ?>
+                                   </span>
+                               </td>
+                               <td>
+                                   <span class="badge <?= $row['is_active'] ? 'badge-success' : 'badge-danger' ?>">
+                                       <?= $row['is_active'] ? 'Active' : 'Inactive' ?>
+                                   </span>
+                               </td>
+                               <td>
+                                   <div class="btn-group">
+                                       <button class="btn btn-primary btn-sm" onclick="editGateway(<?= $row['id'] ?>, '<?= $row['name'] ?>', '<?= $gw['display_name'] ?? '' ?>', '<?= $gw['merchant_id'] ?? '' ?>', '<?= $gw['api_key'] ?? '' ?>', '<?= $gw['api_secret'] ?? '' ?>', '<?= $gw['public_key'] ?? '' ?>', '<?= $gw['password'] ?? '' ?>', <?= $row['is_active'] ?>, <?= (int)($gw['is_test_mode'] ?? 0) ?>)" title="Edit">
+                                           <i class="fas fa-edit"></i>
+                                       </button>
+                                       <button class="btn <?= $row['is_active'] ? 'btn-warning' : 'btn-success' ?> btn-sm" onclick="submitAction('toggle_gateway', <?= $row['id'] ?>)" title="<?= $row['is_active'] ? 'Disable' : 'Enable' ?>">
+                                           <i class="fas <?= $row['is_active'] ? 'fa-ban' : 'fa-check' ?>"></i>
+                                       </button>
+                                       <button class="btn btn-danger btn-sm" onclick="deleteGateway(<?= $row['id'] ?>)" title="Delete">
+                                           <i class="fas fa-trash"></i>
+                                       </button>
+                                   </div>
+                               </td>
                             </tr>
-                            <?php endwhile; ?>
-                            <?php if ($gateways->num_rows == 0): ?>
+                            <?php endwhile; ?>                            <?php if ($gateways->num_rows == 0): ?>
                             <tr><td colspan="6" style="text-align: center; color: #64748b; padding: 40px;">No gateways configured</td></tr>
                             <?php endif; ?>
                         </tbody>
@@ -449,6 +456,7 @@ $inactive_count = $conn->query("SELECT COUNT(*) as c FROM payment_gateways WHERE
                             <option value="">Select Gateway</option>
                             <option value="khalti">Khalti</option>
                             <option value="esewa">eSewa</option>
+                            <option value="bkash">bKash</option>
                             <option value="bank_transfer">Bank Transfer</option>
                             <option value="cash">Cash</option>
                         </select>
@@ -458,20 +466,24 @@ $inactive_count = $conn->query("SELECT COUNT(*) as c FROM payment_gateways WHERE
                         <input type="text" name="display_name" class="form-control" placeholder="e.g., Khalti Payment" required>
                     </div>
                     <div class="form-group">
-                        <label>Merchant ID</label>
+                        <label>Merchant ID / bKash Username</label>
                         <input type="text" name="merchant_id" class="form-control" placeholder="Merchant ID">
                     </div>
                     <div class="form-group">
-                        <label>API Key</label>
+                        <label>API Key / bKash App Key</label>
                         <input type="text" name="api_key" class="form-control" placeholder="API Key">
                     </div>
                     <div class="form-group">
-                        <label>API Secret</label>
+                        <label>API Secret / bKash App Secret</label>
                         <input type="text" name="api_secret" class="form-control" placeholder="API Secret">
                     </div>
                     <div class="form-group">
                         <label>Public Key</label>
                         <input type="text" name="public_key" class="form-control" placeholder="Public Key">
+                    </div>
+                    <div class="form-group">
+                        <label>Password (bKash only)</label>
+                        <input type="password" name="password" class="form-control" placeholder="Password">
                     </div>
                     <div class="checkbox-group">
                         <label><input type="checkbox" name="is_active" value="1" checked> Active</label>
@@ -481,6 +493,64 @@ $inactive_count = $conn->query("SELECT COUNT(*) as c FROM payment_gateways WHERE
                 <div class="modal-footer">
                     <button type="button" class="btn" style="background: #e2e8f0;" onclick="document.getElementById('addModal').style.display='none'">Cancel</button>
                     <button type="submit" class="btn btn-primary">Add Gateway</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Gateway Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5>Edit Payment Gateway</h5>
+                <button class="close" onclick="document.getElementById('editModal').style.display='none'">&times;</button>
+            </div>
+            <form method="POST" action="">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="update_gateway">
+                    <input type="hidden" name="gateway_id" id="edit_gateway_id">
+                    <div class="form-group">
+                        <label>Gateway</label>
+                        <select name="gateway_name" id="edit_gateway_name" class="form-control" required>
+                            <option value="khalti">Khalti</option>
+                            <option value="esewa">eSewa</option>
+                            <option value="bkash">bKash</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="cash">Cash</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Display Name</label>
+                        <input type="text" name="display_name" id="edit_display_name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Merchant ID / bKash Username</label>
+                        <input type="text" name="merchant_id" id="edit_merchant_id" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>API Key / bKash App Key</label>
+                        <input type="text" name="api_key" id="edit_api_key" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>API Secret / bKash App Secret</label>
+                        <input type="text" name="api_secret" id="edit_api_secret" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Public Key</label>
+                        <input type="text" name="public_key" id="edit_public_key" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Password (bKash only)</label>
+                        <input type="password" name="password" id="edit_password" class="form-control">
+                    </div>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="is_active" id="edit_is_active" value="1"> Active</label>
+                        <label><input type="checkbox" name="is_test_mode" id="edit_is_test_mode" value="1"> Test Mode</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" style="background: #e2e8f0;" onclick="document.getElementById('editModal').style.display='none'">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Gateway</button>
                 </div>
             </form>
         </div>
@@ -504,8 +574,18 @@ $inactive_count = $conn->query("SELECT COUNT(*) as c FROM payment_gateways WHERE
             }
         }
         
-        function editGateway(id, name, display, merchant, apiKey, apiSecret, pubKey, active, testMode) {
-            alert('Edit gateway ID: ' + id + '\n' + name);
+        function editGateway(id, name, display, merchant, apiKey, apiSecret, pubKey, password, active, testMode) {
+            document.getElementById('edit_gateway_id').value = id;
+            document.getElementById('edit_gateway_name').value = name;
+            document.getElementById('edit_display_name').value = display;
+            document.getElementById('edit_merchant_id').value = merchant;
+            document.getElementById('edit_api_key').value = apiKey;
+            document.getElementById('edit_api_secret').value = apiSecret;
+            document.getElementById('edit_public_key').value = pubKey;
+            document.getElementById('edit_password').value = password;
+            document.getElementById('edit_is_active').checked = active == 1;
+            document.getElementById('edit_is_test_mode').checked = testMode == 1;
+            document.getElementById('editModal').style.display = 'block';
         }
         
         window.onclick = function(event) {

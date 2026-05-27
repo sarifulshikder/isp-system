@@ -50,6 +50,12 @@ include $base_path . 'includes/topbar.php';
                 <img src="https://www.connectips.com/wp-content/uploads/2020/07/connectips-logo.png">
                 <span>connectIPS</span>
             </div>
+
+            <!-- bKash -->
+            <div class="gateway-card" onclick="payWithBkash()">
+                <img src="https://logos-world.net/wp-content/uploads/2023/02/Bkash-Logo.png">
+                <span>bKash</span>
+            </div>
         </div>
 
         <div style="margin-top: 40px; border-top: 1px solid #f1f5f9; padding-top: 20px;">
@@ -116,6 +122,13 @@ function payWithKhalti() {
 
 function payWithConnectIPS() {
     alert("connectIPS Integration: Please contact support to enable your merchant account.");
+}
+
+function payWithBkash() {
+    let amt = getAmount();
+    if(amt) {
+        location.href = `bkash_pay.php?amount=${amt}`;
+    }
 }
 </script>
 

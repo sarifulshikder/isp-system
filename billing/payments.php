@@ -34,10 +34,10 @@ $where_clause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
 $transactions = $conn->query("
     SELECT t.*, c.username, c.full_name, c.email, c.phone,
-           g.gateway_name
+           g.name as gateway_name
     FROM payment_transactions t
     LEFT JOIN customers c ON t.customer_id = c.id
-    LEFT JOIN payment_gateways g ON t.gateway_id = g.id
+    LEFT JOIN payment_gateways g ON t.gateway = g.name
     $where_clause
     ORDER BY t.created_at DESC
 ");

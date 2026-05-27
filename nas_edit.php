@@ -4,6 +4,7 @@ ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
 include 'config.php';
+include 'includes/radius_clients.php';
 include 'includes/auth.php';
 
 $page_title = "Edit Network Device";
@@ -33,7 +34,7 @@ if (!$nas) {
 
 // Update Logic
 if (isset($_POST['update'])) {
-    $nasname = $_POST['nasname'] ?? '';
+    $nasname = $_POST['ip_address'] ?? $_POST['nasname'] ?? '';
     $shortname = $_POST['shortname'] ?? $nasname;
     $secret = $_POST['secret'] ?? 'secret';
     $device_type = $_POST['device_type'] ?? 'mikrotik';

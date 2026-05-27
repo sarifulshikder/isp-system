@@ -1,12 +1,13 @@
 sql {
     dialect = "mysql"
     driver = "rlm_sql_mysql"
-
     server = "db"
     port = 3306
     login = "isp_user"
     password = "isp_pass123"
     radius_db = "isp_db"
+    sql_user_name = "%{User-Name}"
+    group_attribute = "SQL-Group"
 
     acct_table1 = "radacct"
     acct_table2 = "radacct"
@@ -17,9 +18,10 @@ sql {
     groupreply_table = "radgroupreply"
     usergroup_table = "radusergroup"
 
+    $INCLUDE ${modconfdir}/sql/main/${dialect}/queries.conf
+
     read_clients = yes
     client_table = "nas"
-
     pool {
         start = 5
         min = 4

@@ -24,10 +24,10 @@ $stats = [
 ];
 
 $recentTransactions = $conn->query("
-    SELECT t.*, c.username, c.full_name, g.gateway_name
+    SELECT t.*, c.username, c.full_name, g.name as gateway_name
     FROM payment_transactions t
     LEFT JOIN customers c ON t.customer_id = c.id
-    LEFT JOIN payment_gateways g ON t.gateway_id = g.id
+    LEFT JOIN payment_gateways g ON t.gateway = g.name
     ORDER BY t.created_at DESC LIMIT 10
 ");
 
@@ -37,8 +37,8 @@ $upcomingRenewals = $conn->query("
     FROM customer_subscriptions cs
     JOIN customers c ON cs.customer_id = c.id
     JOIN plans p ON cs.plan_id = p.id
-    WHERE cs.status = 'active' AND cs.next_billing_date <= DATE_ADD(NOW(), INTERVAL 7 DAY)
-    ORDER BY cs.next_billing_date ASC LIMIT 10
+    WHERE cs.status = 'active' AND cs.end_date <= DATE_ADD(NOW(), INTERVAL 7 DAY)
+    ORDER BY cs.end_date ASC LIMIT 10
 ");
 
 $recentInvoices = $conn->query("

@@ -7,12 +7,15 @@ $active = "inventory";
 
 // 1. Add Stock Logic
 if (isset($_POST['add_stock'])) {
-    $name = $_POST['item_name'];
-    $brand = $_POST['brand'];
-    $sn = $_POST['serial_number'];
-    $mac = $_POST['mac_address'];
-    $stmt = $conn->prepare("INSERT INTO inventory_items (item_name, brand, serial_number, mac_address) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssss", $name, $brand, $sn, $mac);
+    $name = $_POST['item_name']; // Note: inventory.php form has this, but table has 'name' field
+    $category = $_POST['category'] ?? 'General';
+    $quantity = intval($_POST['quantity'] ?? 1);
+    $unit_cost = floatval($_POST['unit_cost'] ?? 0);
+    
+    // Check if the table really expects 'item_name' or 'name' based on db.sql
+    // Table 'inventory_items' has columns 'name', 'category', 'quantity', 'unit', 'unit_cost'
+    $stmt = $conn->prepare("INSERT INTO inventory_items (name, category, quantity, unit_cost) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("ssis", $name, $category, $quantity, $unit_cost);
     $stmt->execute();
 }
 
@@ -169,26 +172,20 @@ include 'includes/topbar.php';
         <form method="POST">
             <div class="card-body">
                 <div class="form-group">
-                    <label class="form-label">Item Category</label>
-                    <select name="item_name" class="form-control" required>
-                        <option value="XPON ONU">XPON ONU</option>
-                        <option value="WiFi 6 Router">WiFi 6 Router</option>
-                        <option value="Dual Band Router">Dual Band Router</option>
-                        <option value="Fiber Roll">Fiber Roll (1KM)</option>
-                        <option value="SFP Module">SFP Module</option>
-                    </select>
+                    <label class="form-label">Item Name</label>
+                    <input type="text" name="item_name" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Brand / Manufacturer</label>
-                    <input type="text" name="brand" class="form-control" placeholder="E.g. Huawei, Nokia, Syrotech">
+                    <label class="form-label">Category</label>
+                    <input type="text" name="category" class="form-control" placeholder="E.g. ONU, Router, Fiber">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Serial Number (SN)</label>
-                    <input type="text" name="serial_number" class="form-control" placeholder="Unique device serial" required>
+                    <label class="form-label">Quantity</label>
+                    <input type="number" name="quantity" class="form-control" value="1" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">MAC Address</label>
-                    <input type="text" name="mac_address" class="form-control" placeholder="AA:BB:CC:DD:EE:FF">
+                    <label class="form-label">Unit Cost</label>
+                    <input type="number" step="0.01" name="unit_cost" class="form-control" value="0.00">
                 </div>
             </div>
             <div class="card-body" style="border-top: 1px solid var(--border); background: var(--bg-soft);">
@@ -231,12 +228,20 @@ include 'includes/topbar.php';
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     function openModal(id) {
-        document.getElementById(id).classList.add('show');
-        document.body.style.overflow = 'hidden';
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.display = 'flex';
+            el.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
     }
     function closeModal(id) {
-        document.getElementById(id).classList.remove('show');
-        document.body.style.overflow = 'auto';
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.display = 'none';
+            el.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
     }
 
     new Chart(document.getElementById('typeChart'), {

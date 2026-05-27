@@ -17,7 +17,7 @@ class PaymentGateway {
     private function loadGateways() {
         $result = $this->conn->query("SELECT * FROM payment_gateways WHERE is_active = 1");
         while ($row = $result->fetch_assoc()) {
-            $this->gateways[$row['gateway_name']] = $row;
+            $this->gateways[$row['name']] = $row;
         }
     }
     
@@ -67,6 +67,8 @@ class PaymentGateway {
                 return $this->verifyKhalti($data);
             case 'esewa':
                 return $this->verifyEsewa($data);
+            case 'bkash':
+                return $this->verifyBkash($data);
             case 'bank_transfer':
                 return $this->verifyBankTransfer($data);
             default:
@@ -119,6 +121,28 @@ class PaymentGateway {
             'status' => 'success',
             'message' => 'Payment verified',
             'reference_id' => $refId
+        ];
+    }
+    
+    private function verifyBkash($data) {
+        $trxId = $data['trxID'] ?? '';
+        $transactionId = $data['transaction_id'] ?? '';
+        
+        $gateway = $this->getGateway('bkash');
+        if (!$gateway) {
+            return ['status' => 'error', 'message' => 'bKash not configured'];
+        }
+        
+        if (empty($trxId) || empty($transactionId)) {
+            return ['status' => 'error', 'message' => 'Invalid reference'];
+        }
+        
+        $this->updateTransactionStatus($transactionId, 'completed');
+        
+        return [
+            'status' => 'success',
+            'message' => 'Payment verified',
+            'reference_id' => $trxId
         ];
     }
     
@@ -288,5 +312,26 @@ class EsewaPayment {
         // In production, make API call
         
         return ['status' => 'success', 'message' => 'Verified'];
+    }
+}
+
+/**
+ * bKash Payment Integration
+ */
+class BkashPayment {
+    private $gateway;
+    
+    public function __construct($gateway) {
+        $this->gateway = $gateway;
+    }
+    
+    public function initPayment($amount, $transactionId) {
+        // bKash usually starts with a token request and then create/execute
+        // This class can be used to store configuration or handle server-side parts
+        return [
+            'amount' => $amount,
+            'transaction_id' => $transactionId,
+            'callback_url' => ($this->gateway['redirect_url'] ?? '') . '?transaction_id=' . $transactionId
+        ];
     }
 }
